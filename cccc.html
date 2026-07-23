@@ -1,0 +1,3095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EAU | Instructor, Examiner &amp; Assessor Qualification Records</title>
+<style>
+  :root{
+    --eau-green:#046A38;
+    --eau-green-dark:#02431f;
+    --eau-gold:#FFC72C;
+    --eau-red:#D21034;
+    --sky-top:#0B3D91;
+    --sky-mid:#1B5FAE;
+    --sky-bottom:#BFE1F5;
+    --ink:#0d1b17;
+    --paper:#f7f9f7;
+    --card:#ffffff;
+    --muted:#5a6b64;
+    --ok:#0a7d3d;
+    --pending:#b5451b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);
+    background:var(--paper);
+    min-height:100vh;
+  }
+
+  /* ===== Aviation sky background ===== */
+  .sky{
+    position:fixed; inset:0; z-index:-2;
+    background:linear-gradient(180deg,var(--sky-top) 0%, var(--sky-mid) 40%, var(--sky-bottom) 100%);
+    overflow:hidden;
+  }
+  .sky::before{ /* stars/haze */
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(2px 2px at 20% 15%, rgba(255,255,255,.6), transparent),
+      radial-gradient(1.5px 1.5px at 70% 8%, rgba(255,255,255,.5), transparent),
+      radial-gradient(1.5px 1.5px at 85% 22%, rgba(255,255,255,.4), transparent),
+      radial-gradient(2px 2px at 40% 5%, rgba(255,255,255,.5), transparent);
+  }
+  .cloud{
+    position:absolute;
+    background:rgba(255,255,255,0.85);
+    border-radius:50%;
+    filter:blur(1px);
+    opacity:.75;
+  }
+  .cloud::before,.cloud::after{
+    content:"";
+    position:absolute;
+    background:inherit;
+    border-radius:50%;
+  }
+  .c1{width:180px;height:56px; top:12%; left:-10%; animation:drift 70s linear infinite;}
+  .c1::before{width:100px;height:80px; top:-40px; left:20px;}
+  .c1::after{width:80px;height:60px; top:-25px; left:90px;}
+  .c2{width:130px;height:44px; top:28%; left:-15%; animation:drift 95s linear infinite; animation-delay:-30s;}
+  .c2::before{width:70px;height:56px; top:-28px; left:15px;}
+  .c2::after{width:60px;height:42px; top:-18px; left:65px;}
+  .c3{width:220px;height:64px; top:6%; left:-20%; animation:drift 120s linear infinite; animation-delay:-60s; opacity:.6;}
+  .c3::before{width:120px;height:90px; top:-45px; left:30px;}
+  .c3::after{width:90px;height:70px; top:-30px; left:110px;}
+  @keyframes drift{
+    from{transform:translateX(0);}
+    to{transform:translateX(140vw);}
+  }
+  .plane{
+    position:absolute; top:16%; left:-8%;
+    width:70px; opacity:.9;
+    animation:fly 38s linear infinite;
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.25));
+  }
+  @keyframes fly{
+    from{transform:translate(0,0) rotate(4deg);}
+    50%{transform:translate(70vw,-4vh) rotate(4deg);}
+    to{transform:translate(150vw,-2vh) rotate(4deg);}
+  }
+  .radar{
+    position:absolute; bottom:-10vw; right:-6vw;
+    width:46vw; height:46vw; max-width:640px; max-height:640px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,.15);
+    opacity:.35;
+  }
+  .radar::before{
+    content:"";
+    position:absolute; inset:10%;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .radar::after{
+    content:"";
+    position:absolute; inset:0;
+    border-radius:50%;
+    background:conic-gradient(from 0deg, rgba(255,199,44,.5), transparent 25%);
+    animation:sweep 6s linear infinite;
+  }
+  @keyframes sweep{ to{ transform:rotate(360deg);} }
+
+  @media (prefers-reduced-motion: reduce){
+    .plane,.c1,.c2,.c3,.radar::after{animation:none !important;}
+  }
+
+  /* ===== Header ===== */
+  header.site{
+    padding:26px 5vw 20px;
+    display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+  }
+  .logo-badge{
+    background:#fff; border-radius:16px; padding:10px 14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.18);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .logo-badge img{ height:52px; display:block; }
+  .logo-badge .fallback{
+    font-weight:800; color:var(--eau-green); font-size:14px; letter-spacing:.5px; text-align:center; line-height:1.2;
+  }
+  .title-block h1{
+    margin:0; color:#fff; font-size:clamp(20px,2.6vw,30px); letter-spacing:.2px;
+    text-shadow:0 2px 10px rgba(0,0,0,.25);
+  }
+  .title-block p{
+    margin:4px 0 0; color:rgba(255,255,255,.88); font-size:14px; max-width:620px;
+  }
+  .tri-stripe{
+    height:5px; width:100%;
+    background:linear-gradient(90deg, var(--eau-green) 0 33%, var(--eau-gold) 33% 66%, var(--eau-red) 66% 100%);
+  }
+
+  /* ===== Ribbon nav ===== */
+  nav.ribbon{
+    position:sticky; top:0; z-index:20;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid #e2e7e3;
+    box-shadow:0 6px 20px rgba(0,0,0,.06);
+  }
+  .ribbon-inner{
+    max-width:1180px; margin:0 auto;
+    display:flex; gap:10px; padding:12px 5vw;
+    overflow-x:auto;
+  }
+  .ribbon-btn{
+    border:1.5px solid #d7e0da;
+    background:#fff;
+    color:var(--eau-green-dark);
+    font-weight:700; font-size:13.5px;
+    padding:10px 16px; border-radius:999px;
+    cursor:pointer; white-space:nowrap;
+    transition:all .18s ease;
+  }
+  .ribbon-btn:hover{ border-color:var(--eau-green); transform:translateY(-1px); }
+  .ribbon-btn.active{
+    background:var(--eau-green); color:#fff; border-color:var(--eau-green);
+    box-shadow:0 6px 16px rgba(4,106,56,.35);
+  }
+  .ribbon-btn .dot{
+    display:inline-block; width:8px; height:8px; border-radius:50%;
+    background:var(--eau-gold); margin-right:8px; vertical-align:middle;
+  }
+
+  main{ max-width:1180px; margin:0 auto; padding:34px 5vw 80px; }
+
+  .section-intro{ margin-bottom:22px; }
+  .section-intro h2{ margin:0 0 6px; font-size:22px; color:var(--eau-green-dark); }
+  .section-intro p{ margin:0; color:var(--muted); font-size:14.5px; max-width:760px; }
+  .report-btn{
+    margin-top:14px; background:#fff; border:1.5px solid var(--eau-green);
+    color:var(--eau-green-dark); font-weight:700; font-size:13px;
+    padding:9px 16px; border-radius:999px; cursor:pointer;
+  }
+  .report-btn:hover{ background:var(--eau-green); color:#fff; }
+
+  /* ===== Remaining-training card button ===== */
+  .remaining-btn{
+    margin-top:10px; width:100%; background:#fdeee6; color:var(--pending);
+    border:1px solid #f3cdb3; font-weight:700; font-size:12px;
+    padding:8px 10px; border-radius:8px; cursor:pointer;
+  }
+  .remaining-btn:hover{ background:var(--pending); color:#fff; }
+
+  /* ===== Per-candidate "Remaining Course Report" button (beside name) ===== */
+  .card-name-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .course-report-btn{
+    background:#fff8e6; color:#8a6403; border:1px solid #f0d789;
+    font-weight:700; font-size:10.5px; letter-spacing:.2px;
+    padding:4px 9px; border-radius:999px; cursor:pointer; white-space:nowrap;
+  }
+  .course-report-btn:hover{ background:var(--eau-gold); color:#4a3400; }
+
+  /* ===== Course duration input (inside Remaining Course Report table) ===== */
+  .course-duration-input{
+    width:100%; min-width:120px; padding:7px 9px; border:1.5px solid #d7e0da;
+    border-radius:7px; font-size:12.5px; box-sizing:border-box;
+  }
+
+  /* ===== Remaining Course Report: sections grouped by category name ===== */
+  .course-report-section{ margin-bottom:22px; }
+  .course-report-section h4{
+    margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.5px;
+    color:var(--eau-green-dark); border-bottom:2px solid var(--eau-gold); padding-bottom:6px;
+  }
+  table.course-report-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.course-report-table th{
+    text-align:left; background:#eef3f0; color:var(--eau-green-dark);
+    padding:9px 10px; font-size:11.5px; text-transform:uppercase; letter-spacing:.3px;
+    border:1px solid #e0e6e2;
+  }
+  table.course-report-table td{ padding:8px 10px; border:1px solid #e0e6e2; vertical-align:middle; }
+
+  /* ===== Remaining-training popup list ===== */
+  .remaining-list{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+  .remaining-list li{
+    display:flex; align-items:center; gap:10px; font-size:14px; padding:9px 11px;
+    background:#fdeee6; border-radius:9px; color:#5a2d10;
+  }
+  .remaining-list li .dot2{
+    width:8px; height:8px; border-radius:50%; background:var(--pending); flex:none;
+  }
+
+  /* ===== Full report table ===== */
+  .report-modal{ max-width:920px; }
+  .report-table-wrap{ max-height:60vh; overflow:auto; border:1px solid #e6ebe7; border-radius:12px; }
+  table.report-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  table.report-table th{
+    position:sticky; top:0; background:var(--eau-green-dark); color:#fff;
+    text-align:left; padding:10px 12px; font-size:12px; text-transform:uppercase; letter-spacing:.4px;
+  }
+  table.report-table td{ padding:10px 12px; border-top:1px solid #eef2ef; vertical-align:top; }
+  table.report-table tr:nth-child(even) td{ background:#f9fbf9; }
+  .report-cand{ font-weight:700; color:var(--ink); white-space:nowrap; }
+  .report-cat{ white-space:nowrap; color:var(--eau-green-dark); font-weight:600; }
+  .report-items{ line-height:1.7; }
+  .report-progress{ white-space:nowrap; font-weight:700; color:var(--pending); }
+  .report-empty{ padding:30px; text-align:center; color:var(--muted); font-size:14px; }
+  .report-filter-bar{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .report-filter-btn{
+    border:1.5px solid #d7e0da; background:#fff; color:var(--eau-green-dark);
+    font-weight:700; font-size:12px; padding:7px 13px; border-radius:999px; cursor:pointer;
+  }
+  .report-filter-btn:hover{ border-color:var(--eau-green); }
+  .report-filter-btn.active{ background:var(--eau-green); color:#fff; border-color:var(--eau-green); }
+
+  .add-bar{
+    margin-top:18px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:#fff; border:1px solid #e6ebe7; border-radius:999px;
+    padding:8px 8px 8px 18px; box-shadow:0 4px 14px rgba(10,40,25,.05);
+    max-width:520px;
+  }
+  .add-bar label{ font-size:13px; font-weight:700; color:var(--eau-green-dark); white-space:nowrap; }
+  .add-bar select{
+    flex:1; min-width:140px; border:1px solid #d7e0da; border-radius:999px;
+    padding:8px 12px; font-size:13.5px; color:var(--ink); background:#fbfcfb;
+  }
+  .add-bar button{
+    background:var(--eau-green); color:#fff; border:none; font-weight:700;
+    font-size:13px; padding:9px 18px; border-radius:999px; cursor:pointer;
+    transition:background .15s ease;
+  }
+  .add-bar button:hover{ background:var(--eau-green-dark); }
+  .add-bar button:disabled{ background:#c7d0ca; cursor:not-allowed; }
+  .empty-grid-note{
+    margin-top:22px; color:var(--muted); font-size:14px; font-style:italic;
+    background:#fff; border:1px dashed #cdd7d1; border-radius:12px; padding:18px; text-align:center;
+  }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+    gap:18px; margin-top:20px;
+  }
+  .card{
+    background:var(--card); border-radius:var(--radius);
+    border:1px solid #e6ebe7;
+    box-shadow:0 4px 18px rgba(10,40,25,.06);
+    padding:18px; cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+    position:relative;
+  }
+  .card:hover{ transform:translateY(-3px); box-shadow:0 12px 30px rgba(10,40,25,.14); }
+  .card-remove{
+    position:absolute; top:10px; right:10px;
+    width:24px; height:24px; border-radius:50%; border:none;
+    background:#f1f1f1; color:#777; font-size:14px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .card-remove:hover{ background:var(--eau-red); color:#fff; }
+  .card-top{ display:flex; align-items:center; gap:12px; }
+  .avatar{
+    width:46px; height:46px; border-radius:50%;
+    background:linear-gradient(135deg,var(--eau-green),#0a8f4d);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:16px; flex:none;
+  }
+  .card-name{ font-weight:800; font-size:16px; color:var(--ink); }
+  .card-sheet{ font-size:11.5px; color:var(--muted); }
+  .status-row{ margin-top:14px; display:flex; justify-content:space-between; align-items:center; }
+  .badge{
+    font-size:12px; font-weight:700; padding:5px 10px; border-radius:999px;
+  }
+  .badge.ok{ background:#e6f6ec; color:var(--ok); }
+  .badge.partial{ background:#fdeee6; color:var(--pending); }
+  .badge.none{ background:#f1f1f1; color:#888; }
+  .progress-mini{ font-size:12px; color:var(--muted); }
+
+  /* ===== Candidate detail (modal) ===== */
+  .overlay{
+    position:fixed; inset:0; background:rgba(6,20,14,.55);
+    display:none; align-items:flex-start; justify-content:center;
+    padding:5vh 4vw; overflow-y:auto; z-index:50;
+  }
+  .overlay.open{ display:flex; }
+  .modal{
+    background:#fff; border-radius:18px; max-width:720px; width:100%;
+    box-shadow:0 30px 70px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .modal-head{
+    background:linear-gradient(120deg,var(--eau-green-dark),var(--eau-green));
+    color:#fff; padding:24px 26px; position:relative;
+  }
+  .modal-head h3{ margin:0; font-size:22px; }
+  .modal-head .role-chip{
+    display:inline-block; margin-top:8px; background:rgba(255,255,255,.18);
+    padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;
+  }
+  .modal-close{
+    position:absolute; top:16px; right:18px; background:rgba(255,255,255,.2);
+    border:none; color:#fff; width:32px; height:32px; border-radius:50%;
+    cursor:pointer; font-size:16px; line-height:1;
+  }
+  .modal-body{ padding:22px 26px 28px; }
+  .qual-section{ margin-bottom:20px; }
+  .qual-section h4{
+    margin:0 0 10px; font-size:14px; text-transform:uppercase; letter-spacing:.6px;
+    color:var(--eau-green-dark); border-bottom:2px solid var(--eau-gold); padding-bottom:6px;
+  }
+  .qual-list{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+  .qual-list li{
+    display:flex; align-items:center; font-size:14px; padding:8px 10px;
+    background:#f7f9f7; border-radius:10px;
+    transition:background .15s ease;
+  }
+  .qual-list li:hover{ background:#eef4f0; }
+  .check-wrap{
+    display:flex; align-items:center; gap:10px; width:100%; cursor:pointer; user-select:none;
+  }
+  .check-wrap input[type="checkbox"]{
+    width:19px; height:19px; flex:none; cursor:pointer;
+    accent-color:var(--ok);
+  }
+  .check-wrap .item-text{ line-height:1.3; }
+  .empty-note{ font-size:13px; color:var(--muted); font-style:italic; }
+
+  /* ===== Add-to-list dropdown ===== */
+  .add-row{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:#fff; border:1px dashed #c9d6cd; border-radius:12px;
+    padding:14px 16px; margin-bottom:6px;
+  }
+  .add-label{ font-size:13.5px; font-weight:700; color:var(--eau-green-dark); }
+  .add-row select{
+    padding:9px 12px; border-radius:8px; border:1.5px solid #d7e0da;
+    font-size:13.5px; color:var(--ink); background:#fbfdfb; min-width:200px;
+  }
+  .add-btn{
+    background:var(--eau-green); color:#fff; border:none; font-weight:700;
+    font-size:13.5px; padding:10px 16px; border-radius:8px; cursor:pointer;
+    transition:background .15s ease;
+  }
+  .add-btn:hover{ background:var(--eau-green-dark); }
+  .add-hint{ margin:0; font-size:13.5px; color:var(--muted); }
+  .empty-grid{
+    grid-column:1/-1; text-align:center; color:var(--muted);
+    padding:36px 20px; border:1.5px dashed #d7e0da; border-radius:14px; font-size:14px;
+    background:rgba(255,255,255,.6);
+  }
+  .card{ position:relative; }
+  .card-actions{ position:absolute; top:10px; right:10px; display:flex; gap:6px; }
+  .remove-btn, .edit-btn{
+    width:24px; height:24px;
+    border-radius:50%; border:none; background:#f1f1f1; color:#777;
+    font-size:13px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .remove-btn:hover{ background:var(--eau-red); color:#fff; }
+  .edit-btn:hover{ background:var(--eau-gold); color:#5a4300; }
+
+  /* ===== Record row controls (checkbox / form-number / remove) ===== */
+  .qual-list li{ align-items:stretch; flex-direction:column; gap:8px; }
+  .qual-list li.pending-change{
+    background:#fffaeb; border:1px solid var(--eau-gold); border-radius:10px; padding:8px;
+  }
+  .pending-dot{ color:var(--eau-gold); font-size:9px; flex:none; }
+  .record-row-top{ display:flex; align-items:center; gap:10px; }
+  .check-wrap{ flex:1 1 auto; min-width:180px; }
+  .record-remove{
+    width:22px; height:22px; border-radius:50%; border:none; background:#eee; color:#888;
+    font-size:12px; cursor:pointer; flex:none;
+  }
+  .record-remove:hover{ background:var(--eau-red); color:#fff; }
+  .record-row-bottom{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding-left:29px; }
+
+  /* ===== Checklist Save/Cancel bar (per-candidate checkbox changes) ===== */
+  .checklist-save-bar{
+    position:sticky; bottom:0; margin-top:18px; padding:14px 16px;
+    background:#fffaeb; border:1.5px solid var(--eau-gold); border-radius:12px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .checklist-save-note{ font-size:13px; font-weight:600; color:#5a4300; }
+  .checklist-save-actions{ display:flex; gap:10px; }
+  .checklist-cancel-btn{
+    background:#eee; color:#555; border:none; font-weight:700; font-size:13px;
+    padding:9px 16px; border-radius:8px; cursor:pointer;
+  }
+  .checklist-cancel-btn:hover{ background:#ddd; }
+  .checklist-save-btn{
+    background:var(--eau-green); color:#fff; border:none; font-weight:700; font-size:13px;
+    padding:9px 16px; border-radius:8px; cursor:pointer;
+  }
+  .checklist-save-btn:hover{ background:var(--eau-green-dark); }
+  .form-select{
+    font-size:12.5px; padding:6px 8px; border-radius:8px; border:1.5px solid #d7e0da;
+    background:#fff; color:var(--eau-green-dark); font-weight:600; max-width:190px;
+  }
+  .form-select:disabled{ opacity:.55; cursor:not-allowed; background:#f3f5f3; }
+  .check-wrap input[type="checkbox"]:disabled{ cursor:not-allowed; opacity:.7; }
+  .form-tag{
+    font-size:12px; color:var(--eau-green-dark); background:#eaf5ee; border:1px solid #cfe6d7;
+    padding:4px 9px; border-radius:8px; font-weight:600; line-height:1.3;
+  }
+  .record-row-files{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding-left:29px; }
+  .attach-btn{
+    background:#fff; border:1.5px solid var(--eau-green); color:var(--eau-green-dark);
+    font-weight:700; font-size:11.5px; padding:6px 11px; border-radius:999px; cursor:pointer;
+  }
+  .attach-btn:hover{ background:var(--eau-green); color:#fff; }
+  .file-chip{
+    display:inline-flex; align-items:center; gap:7px;
+    background:#eef3f0; border:1px solid #d7e0da; border-radius:999px;
+    padding:4px 6px 4px 8px; font-size:12px; color:var(--eau-green-dark); font-weight:600;
+    max-width:220px;
+  }
+  .file-chip img{ width:20px; height:20px; object-fit:cover; border-radius:5px; flex:none; }
+  .file-chip-icon{ font-size:14px; }
+  .file-chip a{ color:var(--eau-green-dark); text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .file-chip a:hover{ text-decoration:underline; }
+  .file-delete{
+    width:18px; height:18px; border-radius:50%; border:none; background:#dfe7e2; color:#666;
+    font-size:11px; cursor:pointer; flex:none; line-height:1;
+  }
+  .file-delete:hover{ background:var(--eau-red); color:#fff; }
+  .add-record-row{
+    display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;
+  }
+  .add-record-row input[type="text"]{
+    flex:1 1 200px; padding:9px 12px; border-radius:8px; border:1.5px solid #d7e0da; font-size:13.5px;
+  }
+  .add-record-row button{
+    background:var(--eau-green); color:#fff; border:none; font-weight:700;
+    font-size:12.5px; padding:8px 14px; border-radius:8px; cursor:pointer; white-space:nowrap;
+  }
+  .add-record-row button:hover{ background:var(--eau-green-dark); }
+  .modal-head h3{ display:inline-block; margin-right:8px; }
+  .name-edit-btn{
+    background:rgba(255,255,255,.2); border:none; color:#fff; width:26px; height:26px;
+    border-radius:50%; cursor:pointer; font-size:12px; vertical-align:middle;
+  }
+  .name-edit-btn:hover{ background:rgba(255,255,255,.35); }
+
+  /* ===== Download / attachment ===== */
+  .attach{
+    margin-top:44px; background:linear-gradient(120deg,#0e3d24,#0a2c1a);
+    border-radius:18px; padding:26px 28px; color:#fff;
+    display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap;
+  }
+  .attach h3{ margin:0 0 6px; font-size:18px; }
+  .attach p{ margin:0; color:rgba(255,255,255,.8); font-size:13.5px; max-width:480px; }
+  .attach a.btn{
+    background:var(--eau-gold); color:#0a2c1a; font-weight:800; text-decoration:none;
+    padding:12px 22px; border-radius:999px; white-space:nowrap; font-size:14px;
+    box-shadow:0 8px 20px rgba(255,199,44,.35);
+  }
+
+  footer{
+    text-align:center; padding:26px; color:#fff; font-size:12.5px;
+    background:var(--eau-green-dark);
+  }
+
+  /* ===== Login / welcome screen ===== */
+  .login-screen{
+    position:relative; min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:6vh 5vw; overflow:hidden;
+    background:#0a1c33;
+  }
+  .login-bg-photo{
+    position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; object-position:center 40%;
+    filter:saturate(1.05);
+  }
+  .login-bg-overlay{
+    position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(6,26,20,.55) 0%, rgba(6,26,20,.72) 55%, rgba(4,17,13,.88) 100%);
+  }
+  .instructor-photo-badge{
+    position:absolute; z-index:2;
+    width:150px; height:150px; border-radius:50%;
+    object-fit:cover; border:4px solid var(--eau-gold);
+    box-shadow:0 14px 34px rgba(0,0,0,.45);
+  }
+  .instructor-photo-badge.left{ bottom:7%; left:6%; }
+  .instructor-photo-badge.right{ bottom:7%; right:6%; display:none; }
+  @media (min-width:900px){
+    .instructor-photo-badge.right{ display:block; }
+  }
+  .login-card{
+    position:relative; z-index:2;
+    background:rgba(255,255,255,.97);
+    border-radius:20px; padding:38px 34px 32px;
+    width:100%; max-width:380px;
+    box-shadow:0 30px 70px rgba(0,0,0,.4);
+    text-align:center;
+  }
+  .login-card .logo-badge{ margin:0 auto 16px; width:fit-content; }
+  .login-card h2{ margin:0 0 4px; color:var(--eau-green-dark); font-size:20px; }
+  .login-card p.sub{ margin:0 0 22px; color:var(--muted); font-size:13px; }
+  .login-field{ text-align:left; margin-bottom:14px; }
+  .login-field label{ display:block; font-size:12.5px; font-weight:700; color:var(--eau-green-dark); margin-bottom:5px; }
+  .login-field input{
+    width:100%; padding:11px 13px; border:1.5px solid #d7e0da; border-radius:9px;
+    font-size:14.5px; box-sizing:border-box;
+  }
+  .login-error{ color:var(--eau-red); font-size:12.5px; min-height:18px; margin:2px 0 12px; font-weight:600; }
+  .login-btn{
+    width:100%; background:var(--eau-green); color:#fff; border:none; font-weight:800;
+    font-size:14.5px; padding:12px; border-radius:10px; cursor:pointer;
+    box-shadow:0 8px 20px rgba(4,106,56,.3); transition:background .15s ease;
+  }
+  .login-btn:hover{ background:var(--eau-green-dark); }
+
+  .login-role-tabs{ display:flex; gap:8px; margin-bottom:16px; }
+  .login-role-tab{
+    flex:1; padding:10px; border-radius:9px; border:1.5px solid #d7e0da;
+    background:#fbfcfb; color:var(--muted); font-weight:700; font-size:13px; cursor:pointer;
+  }
+  .login-role-tab.active{
+    background:var(--eau-green); color:#fff; border-color:var(--eau-green);
+  }
+  .login-note{ margin-top:16px; font-size:11.5px; color:var(--muted); line-height:1.5; }
+
+  /* ===== Public "fill a form" button + choice modal (login screen) ===== */
+  .public-form-btn{
+    margin-top:18px; width:100%; background:#fff; border:1.5px solid var(--eau-green);
+    color:var(--eau-green-dark); font-weight:800; font-size:13.5px;
+    padding:11px; border-radius:10px; cursor:pointer;
+  }
+  .public-form-btn:hover{ background:var(--eau-green); color:#fff; }
+
+  /* ===== How to Fill guides ===== */
+  .guide-list{ display:grid; gap:10px; margin-bottom:6px; }
+  .guide-item{
+    display:flex; align-items:center; gap:12px;
+    background:#f7f9f7; border:1px solid #e6ebe7; border-radius:12px; padding:12px 14px;
+  }
+  .guide-icon{ font-size:22px; flex:none; }
+  .guide-title{ flex:1; font-size:14px; font-weight:600; }
+  .guide-title a{ color:var(--eau-green-dark); text-decoration:none; }
+  .guide-title a:hover{ text-decoration:underline; }
+  .guide-delete{
+    width:24px; height:24px; border-radius:50%; border:none; background:#eee; color:#888;
+    font-size:13px; cursor:pointer; flex:none;
+  }
+  .guide-delete:hover{ background:var(--eau-red); color:#fff; }
+  .guide-add-form{
+    margin-top:16px; padding-top:16px; border-top:1px dashed #d7e0da;
+    display:grid; gap:10px;
+  }
+  .guide-add-form input[type="text"]{
+    padding:10px 12px; border-radius:8px; border:1.5px solid #d7e0da; font-size:13.5px;
+  }
+  .guide-add-tabs{ display:flex; gap:8px; }
+  .guide-add-tab{
+    flex:1; padding:8px; border-radius:8px; border:1.5px solid #d7e0da;
+    background:#fbfcfb; color:var(--muted); font-weight:700; font-size:12.5px; cursor:pointer;
+  }
+  .guide-add-tab.active{ background:var(--eau-green); color:#fff; border-color:var(--eau-green); }
+  .form-choice-options{ display:grid; gap:12px; margin-top:6px; }
+  .form-choice-btn{
+    display:flex; align-items:center; gap:12px; text-align:left;
+    background:#f7f9f7; border:1.5px solid #e6ebe7; border-radius:12px;
+    padding:14px 16px; cursor:pointer; font-family:inherit;
+  }
+  .form-choice-btn:hover{ border-color:var(--eau-green); background:#eef5f0; }
+  .form-choice-btn .fc-icon{ font-size:24px; flex:none; }
+  .form-choice-btn .fc-title{ font-weight:800; color:var(--eau-green-dark); font-size:14.5px; }
+  .form-choice-btn .fc-sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .add-new-form-btn{ border-style:dashed; }
+
+  /* ===== Fillable form modal (public "Fill a Form" flow) ===== */
+  .ff-letterhead{ border:1.5px solid #24312b; border-radius:10px; overflow:hidden; margin-bottom:22px; }
+  .ff-letterhead table{ width:100%; border-collapse:collapse; }
+  .ff-letterhead td{ border:1px solid #24312b; padding:10px 12px; font-size:12.5px; vertical-align:middle; }
+  .ff-letterhead .ff-logo-cell{ text-align:center; font-weight:800; color:var(--eau-green-dark); font-size:11px; line-height:1.35; }
+  .ff-letterhead .ff-title-cell{ text-align:center; font-weight:800; font-size:12.5px; line-height:1.5; }
+  .ff-letterhead .ff-rev-cell,.ff-letterhead .ff-date-cell{ text-align:center; }
+  .ff-letterhead .ff-formname-cell{ text-align:center; font-weight:800; letter-spacing:.3px; }
+  .ff-section{ margin-bottom:22px; }
+  .ff-section h4{
+    margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.5px;
+    color:var(--eau-green-dark); border-bottom:2px solid var(--eau-gold); padding-bottom:6px;
+  }
+  .ff-fields{ display:grid; gap:10px; }
+  .ff-field-row{ display:grid; grid-template-columns:230px 1fr; gap:10px; align-items:center; }
+  .ff-field-row label{ font-size:13px; font-weight:700; color:var(--ink); }
+  .ff-field-row input, .ff-section > input[type="text"]{
+    width:100%; padding:9px 11px; border:1.5px solid #d7e0da; border-radius:8px;
+    font-size:13.5px; box-sizing:border-box;
+  }
+  .ff-table-wrap{ overflow-x:auto; border:1px solid #e6ebe7; border-radius:10px; }
+  table.ff-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.ff-table th{
+    background:var(--eau-green-dark); color:#fff; padding:8px 10px; font-size:11px;
+    text-transform:uppercase; text-align:left; white-space:nowrap;
+  }
+  table.ff-table td{ border-top:1px solid #eef2ef; padding:6px 8px; }
+  table.ff-table td.ff-item-no{ text-align:center; width:36px; color:var(--muted); font-weight:700; }
+  table.ff-table input{
+    width:100%; border:1px solid #d7e0da; border-radius:6px; padding:6px 8px;
+    font-size:12.5px; box-sizing:border-box;
+  }
+  .ff-signoff{ display:grid; gap:16px; margin-top:6px; }
+  .ff-signoff-row{ display:grid; grid-template-columns:1fr 180px; gap:10px; align-items:end; }
+  .ff-signoff-row label{ display:block; font-size:12.5px; font-weight:700; color:var(--eau-green-dark); margin-bottom:5px; }
+  .ff-signoff-row input{
+    width:100%; padding:9px 11px; border:1.5px solid #d7e0da; border-radius:8px;
+    font-size:13.5px; box-sizing:border-box;
+  }
+  .ff-add-row-btn{
+    margin-top:8px; background:#fff; border:1.5px dashed var(--eau-green);
+    color:var(--eau-green-dark); font-weight:700; font-size:12.5px;
+    padding:7px 14px; border-radius:8px; cursor:pointer;
+  }
+  .ff-add-row-btn:hover{ background:#eef5f0; }
+  .ff-submit-bar{ display:flex; justify-content:flex-end; gap:10px; margin-top:6px; }
+  .ff-submit-btn{
+    background:var(--eau-green); color:#fff; border:none; font-weight:800;
+    font-size:14px; padding:12px 24px; border-radius:999px; cursor:pointer;
+  }
+  .ff-submit-btn:hover{ background:var(--eau-green-dark); }
+  .ff-export-btn{
+    background:#fff; color:var(--eau-green-dark); border:1.5px solid var(--eau-green); font-weight:800;
+    font-size:14px; padding:12px 24px; border-radius:999px; cursor:pointer;
+  }
+  .ff-export-btn:hover{ background:#eef5f0; }
+
+  /* ===== Notification bell (main app header) ===== */
+  .notif-btn{ position:relative; }
+  .notif-badge{
+    position:absolute; top:-6px; right:-6px;
+    background:var(--eau-red); color:#fff; font-size:10.5px; font-weight:800;
+    min-width:17px; height:17px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center; padding:0 3px;
+    border:2px solid var(--eau-green-dark);
+  }
+  .notif-list{ display:grid; gap:10px; }
+  .notif-section-title{
+    font-size:13px; font-weight:800; color:var(--eau-green-dark); text-transform:uppercase;
+    letter-spacing:.4px; margin:0 0 12px; display:flex; align-items:center; gap:8px;
+  }
+  .notif-item{
+    background:#f7f9f7; border:1px solid #e6ebe7; border-radius:12px; padding:14px 16px;
+  }
+  .notif-item.unread{ border-color:var(--eau-gold); background:#fffaeb; }
+  .notif-item-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+  .notif-time{ font-size:11.5px; color:var(--muted); font-weight:600; }
+  .notif-preview{ font-size:13px; color:var(--ink); margin-top:8px; line-height:1.6; }
+  .notif-preview b{ color:var(--eau-green-dark); }
+  .notif-actions{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .notif-actions button{
+    font-size:12px; font-weight:700; padding:7px 13px; border-radius:8px; cursor:pointer; border:none;
+  }
+  .notif-download{ background:var(--eau-green); color:#fff; }
+  .notif-download:hover{ background:var(--eau-green-dark); }
+  .notif-read{ background:#eef3f0; color:var(--eau-green-dark); }
+  .notif-read:hover{ background:#dfe7e2; }
+  .notif-delete{ background:#fdeee6; color:var(--pending); }
+  .notif-delete:hover{ background:var(--eau-red); color:#fff; }
+
+  /* ===== Account menu (top of main app) ===== */
+  .account-menu{ display:flex; gap:8px; margin-left:auto; align-items:center; }
+  .account-btn{
+    border:1.5px solid rgba(255,255,255,.5); background:rgba(255,255,255,.12);
+    color:#fff; font-weight:700; font-size:12.5px; padding:8px 14px;
+    border-radius:999px; cursor:pointer; white-space:nowrap;
+  }
+  .account-btn:hover{ background:rgba(255,255,255,.25); }
+  .save-btn{ background:var(--eau-gold); color:#5a4300; border-color:var(--eau-gold); font-weight:800; }
+  .save-btn:hover{ background:#ffd766; }
+  .save-status{ font-size:11.5px; color:rgba(255,255,255,.85); white-space:nowrap; font-weight:600; }
+
+  /* ===== Header banner photo (main menu) ===== */
+  header.site{ position:relative; overflow:hidden; }
+  .header-bg-photo{
+    position:absolute; inset:0; width:100%; height:100%;
+    object-fit:cover; object-position:center 30%; z-index:0;
+  }
+  .header-bg-overlay{
+    position:absolute; inset:0; z-index:0;
+    background:linear-gradient(100deg, rgba(2,67,31,.92) 0%, rgba(4,106,56,.82) 45%, rgba(4,106,56,.55) 100%);
+  }
+  header.site > *{ position:relative; z-index:1; }
+
+  /* ===== Credential-change modal fields ===== */
+  .cred-field{ text-align:left; margin-bottom:12px; }
+  .cred-field label{ display:block; font-size:12.5px; font-weight:700; color:var(--eau-green-dark); margin-bottom:4px; }
+  .cred-field input{
+    width:100%; padding:10px 12px; border:1.5px solid #d7e0da; border-radius:8px;
+    font-size:14px; box-sizing:border-box;
+  }
+  .cred-divider{ border:none; border-top:1px dashed #d7e0da; margin:16px 0; }
+  .cred-error{ color:var(--eau-red); font-size:12.5px; font-weight:600; min-height:16px; margin-bottom:6px; }
+  .cred-success{ color:var(--ok); font-size:12.5px; font-weight:600; min-height:16px; margin-bottom:6px; }
+</style>
+</head>
+<body>
+
+<div class="sky">
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+  <svg class="plane" viewBox="0 0 64 64" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 34l24-4 14-22 6 2-8 21 18-2 6 5-6 4-18 1 9 20-6 2-13-19-24 3z"/>
+  </svg>
+  <div class="radar"></div>
+</div>
+
+<div class="login-screen" id="loginScreen">
+  <img class="login-bg-photo" src="a350-aircraft.jpeg" alt="Ethiopian Airlines A350-1000">
+  <div class="login-bg-overlay"></div>
+  <img class="instructor-photo-badge left" src="instructor-classroom.jpeg" alt="EAU instructor training session">
+  <img class="instructor-photo-badge right" src="instructor-classroom.jpeg" alt="EAU instructor training session">
+
+  <div class="login-card">
+    <div class="logo-badge">
+      <img src="https://ethiopianaviationuniversity.azurewebsites.net/ResourcePackages/AviationUniversity/assets/dist/Image/EAU-logo.png"
+           alt="Ethiopian Aviation University logo"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <div class="fallback" style="display:none;">ETHIOPIAN<br>AVIATION<br>UNIVERSITY</div>
+    </div>
+    <h2>Qualification Records Portal</h2>
+    <p class="sub">Sign in to view and manage instructor, examiner &amp; assessor records</p>
+
+    <div class="login-role-tabs">
+      <button type="button" class="login-role-tab active" id="roleTabAdmin" onclick="setLoginRole('admin')">&#128274; Admin</button>
+      <button type="button" class="login-role-tab" id="roleTabUser" onclick="setLoginRole('user')">&#128100; User</button>
+    </div>
+
+    <div class="login-field">
+      <label for="loginUser">Username</label>
+      <input type="text" id="loginUser" autocomplete="username" placeholder="Username">
+    </div>
+    <div class="login-field">
+      <label for="loginPass">Password</label>
+      <input type="password" id="loginPass" autocomplete="current-password" placeholder="Password">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" type="button" onclick="attemptLogin()">Sign In</button>
+    <button class="public-form-btn" type="button" onclick="openFormChoice()">&#128221; Fill a Form</button>
+    <button class="public-form-btn" type="button" onclick="openHowToFill()">&#10067; How to Fill</button>
+    <button class="public-form-btn" type="button" onclick="openSignup()">&#128100; Create User Account</button>
+    <p class="login-note">Access is restricted to authorised EAU training-quality personnel. Credentials can be changed from the main menu once signed in.</p>
+  </div>
+</div>
+
+<div class="overlay" id="signupOverlay" style="z-index:90;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head" style="padding:20px 22px;">
+      <button class="modal-close" onclick="closeSignup()">&times;</button>
+      <h3 style="font-size:17px;">Create User Account</h3>
+      <span class="role-chip">Submitted for admin approval before you can sign in</span>
+    </div>
+    <div class="modal-body" style="padding:20px 22px 24px;">
+      <div class="login-field">
+        <label for="signupUser">Choose a username</label>
+        <input type="text" id="signupUser" autocomplete="off" placeholder="Username">
+      </div>
+      <div class="login-field">
+        <label for="signupPass">Choose a password</label>
+        <input type="password" id="signupPass" autocomplete="new-password" placeholder="Password">
+      </div>
+      <div class="login-field">
+        <label for="signupPass2">Confirm password</label>
+        <input type="password" id="signupPass2" autocomplete="new-password" placeholder="Confirm password">
+      </div>
+      <div class="login-error" id="signupError"></div>
+      <div class="cred-success" id="signupSuccess"></div>
+      <button class="login-btn" type="button" onclick="submitSignup()">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="formChoiceOverlay" style="z-index:90;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head" style="padding:20px 22px;">
+      <button class="modal-close" onclick="closeFormChoice()">&times;</button>
+      <h3 style="font-size:17px;">Fill a Form</h3>
+      <span class="role-chip">Choose which EAA form you'd like to fill out</span>
+    </div>
+    <div class="modal-body" style="padding:20px 22px 24px;">
+      <div class="form-choice-options">
+        <button class="form-choice-btn" type="button" onclick="openFillForm('EAA_F076')">
+          <span class="fc-icon">&#128220;</span>
+          <span>
+            <div class="fc-title">EAA F-076</div>
+            <div class="fc-sub">Experience Recording Form</div>
+          </span>
+        </button>
+        <button class="form-choice-btn" type="button" onclick="openFillForm('EAA_F033')">
+          <span class="fc-icon">&#128220;</span>
+          <span>
+            <div class="fc-title">EAA F-033</div>
+            <div class="fc-sub">Personnel Qualification Record Form</div>
+          </span>
+        </button>
+        <button class="form-choice-btn add-new-form-btn" type="button" onclick="addNewFormComingSoon()">
+          <span class="fc-icon">&#10133;</span>
+          <span>
+            <div class="fc-title">Add New Form</div>
+            <div class="fc-sub">Request another EAA form be added here</div>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="howToFillOverlay" style="z-index:91;">
+  <div class="modal report-modal">
+    <div class="modal-head" style="padding:20px 22px;">
+      <button class="modal-close" onclick="closeHowToFill()">&times;</button>
+      <h3 style="font-size:17px;">How to Fill</h3>
+      <span class="role-chip">Reference guides and filled examples for each form</span>
+    </div>
+    <div class="modal-body" style="padding:18px 22px 24px;" id="howToFillBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="fillFormOverlay" style="z-index:92;">
+  <div class="modal report-modal" style="max-width:820px;">
+    <div class="modal-head" style="padding:20px 22px;">
+      <button class="modal-close" onclick="closeFillForm()">&times;</button>
+      <h3 id="fillFormTitle" style="font-size:17px;"></h3>
+      <span class="role-chip">Fill in what you can, then submit &mdash; nothing is required</span>
+    </div>
+    <div class="modal-body" style="padding:22px 24px 28px;" id="fillFormBody"></div>
+  </div>
+</div>
+
+<div id="appContent" style="display:none;">
+
+
+<header class="site">
+  <img class="header-bg-photo" src="instructor-classroom.jpeg" alt="">
+  <div class="header-bg-overlay"></div>
+  <div class="logo-badge">
+    <img src="https://ethiopianaviationuniversity.azurewebsites.net/ResourcePackages/AviationUniversity/assets/dist/Image/EAU-logo.png"
+         alt="Ethiopian Aviation University logo"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+    <div class="fallback" style="display:none;">ETHIOPIAN<br>AVIATION<br>UNIVERSITY</div>
+  </div>
+  <div class="title-block">
+    <h1>Instructor, Examiner &amp; Assessor Qualification Records</h1>
+    <p>Ethiopian Aviation University &mdash; Continuation training, initial approval, and qualification status for accredited Knowledge Instructors, Knowledge Examiners, Practical Instructors and Practical Assessors.</p>
+  </div>
+  <div class="account-menu">
+    <span class="save-status" id="saveStatus"></span>
+    <button class="account-btn notif-btn" id="notifBtn" type="button" onclick="openNotifications()">
+      &#128276; Notifications
+      <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+    </button>
+    <button class="account-btn" type="button" onclick="openHowToFill()">&#10067; How to Fill</button>
+    <button class="account-btn save-btn" id="saveBtn" type="button" onclick="saveAll()">&#128190; Save Changes</button>
+    <button class="account-btn" id="changeLoginBtn" type="button" onclick="openCredModal()">&#128272; Change Login</button>
+    <button class="account-btn" type="button" onclick="logout()">&#8618; Sign Out</button>
+  </div>
+</header>
+<div class="tri-stripe"></div>
+
+<nav class="ribbon">
+  <div class="ribbon-inner" id="ribbonInner">
+    <!-- buttons injected by JS -->
+  </div>
+</nav>
+
+<main>
+  <div class="section-intro">
+    <h2 id="sectionTitle">Knowledge Instructor</h2>
+    <p id="sectionDesc"></p>
+    <button class="report-btn" id="reportOpenBtn" type="button" onclick="openReport()">&#128203; Remaining Training Report</button>
+  </div>
+  <div class="add-row" id="addRow"></div>
+  <div class="grid" id="cardGrid"></div>
+
+  <div class="attach">
+    <div>
+      <h3>Source qualification register</h3>
+      <p>The full multi-sheet Excel workbook &mdash; one record per candidate, with all continuation training, initial approval, qualification and examiner checkboxes &mdash; is attached below.</p>
+    </div>
+    <a class="btn" href="EAU-Instructor-Examiner-Qualification-Records.xlsx" download>&#128190; Download Excel Register</a>
+  </div>
+</main>
+
+<footer>Ethiopian Aviation University &middot; Instructor / Examiner / Assessor Qualification Records &middot; Generated from the official candidate register</footer>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <h3 id="modalName"></h3>
+      <button class="name-edit-btn" type="button" onclick="editName(currentModalKey)" title="Edit candidate name">&#9998;</button>
+      <br>
+      <span class="role-chip" id="modalRole"></span>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="promptOverlay" style="z-index:80;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head" style="padding:20px 22px;">
+      <h3 id="promptTitle" style="font-size:17px;">Edit</h3>
+    </div>
+    <div class="modal-body" style="padding:20px 22px 22px;">
+      <div id="promptInputWrap">
+        <input type="text" id="promptInput" style="width:100%;padding:11px 13px;border:1.5px solid #d7e0da;border-radius:9px;font-size:14.5px;box-sizing:border-box;">
+      </div>
+      <p id="promptMessage" style="margin:0;color:var(--muted);font-size:14px;"></p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">
+        <button type="button" onclick="promptCancel()" style="background:#eee;color:#444;border:none;font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:8px;cursor:pointer;">Cancel</button>
+        <button type="button" id="promptConfirmBtn" onclick="promptConfirm()" style="background:var(--eau-green);color:#fff;border:none;font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:8px;cursor:pointer;">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="credOverlay" style="z-index:85;">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-head" style="padding:20px 22px;">
+      <button class="modal-close" onclick="closeCredModal()">&times;</button>
+      <h3 style="font-size:17px;">Change Login Credentials</h3>
+    </div>
+    <div class="modal-body" style="padding:20px 22px 24px;">
+      <p style="margin:0 0 14px;color:var(--muted);font-size:13px;">Confirm your <strong>current</strong> username and password first &mdash; new credentials are only accepted once these match.</p>
+
+      <div class="cred-field">
+        <label>Current username</label>
+        <input type="text" id="credCurUser" autocomplete="username">
+      </div>
+      <div class="cred-field">
+        <label>Current password</label>
+        <input type="password" id="credCurPass" autocomplete="current-password">
+      </div>
+      <div class="cred-error" id="credError1"></div>
+
+      <hr class="cred-divider">
+
+      <div class="cred-field">
+        <label>New username <span style="font-weight:400;color:var(--muted);">(leave blank to keep current)</span></label>
+        <input type="text" id="credNewUser" autocomplete="off">
+      </div>
+      <div class="cred-field">
+        <label>New password <span style="font-weight:400;color:var(--muted);">(leave blank to keep current)</span></label>
+        <input type="password" id="credNewPass" autocomplete="new-password">
+      </div>
+      <div class="cred-field">
+        <label>Confirm new password</label>
+        <input type="password" id="credNewPass2" autocomplete="new-password">
+      </div>
+      <div class="cred-error" id="credError2"></div>
+      <div class="cred-success" id="credSuccess"></div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <button type="button" onclick="closeCredModal()" style="background:#eee;color:#444;border:none;font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:8px;cursor:pointer;">Cancel</button>
+        <button type="button" onclick="submitCredChange()" style="background:var(--eau-green);color:#fff;border:none;font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:8px;cursor:pointer;">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="remainingOverlay" style="z-index:60;">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-head" style="padding:20px 22px;">
+      <button class="modal-close" onclick="closeRemaining()">&times;</button>
+      <h3 id="remainingTitle" style="font-size:17px;"></h3>
+      <span class="role-chip" id="remainingSub"></span>
+    </div>
+    <div class="modal-body" style="padding:20px 22px 24px;" id="remainingBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="reportOverlay" style="z-index:60;">
+  <div class="modal report-modal">
+    <div class="modal-head" style="padding:20px 22px;">
+      <button class="modal-close" onclick="closeReport()">&times;</button>
+      <h3 style="font-size:17px;">Remaining Training Report &mdash; All Candidates</h3>
+      <span class="role-chip">Every candidate with unchecked / in-progress items, across all categories</span>
+    </div>
+    <div class="modal-body" style="padding:18px 22px 24px;" id="reportBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="courseReportOverlay" style="z-index:61;">
+  <div class="modal report-modal">
+    <div class="modal-head" style="padding:20px 22px;">
+      <button class="modal-close" onclick="closeCourseReport()">&times;</button>
+      <h3 id="courseReportTitle" style="font-size:17px;"></h3>
+      <span class="role-chip">Remaining courses across all categories &mdash; fill in duration and save</span>
+    </div>
+    <div class="modal-body" style="padding:18px 22px 24px;" id="courseReportBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="notifOverlay" style="z-index:65;">
+  <div class="modal report-modal">
+    <div class="modal-head" style="padding:20px 22px;">
+      <button class="modal-close" onclick="closeNotifications()">&times;</button>
+      <h3 style="font-size:17px;">Form Submissions</h3>
+      <span class="role-chip">Responses submitted through the public "Fill a Form" button</span>
+    </div>
+    <div class="modal-body" style="padding:18px 22px 24px;" id="notifBody"></div>
+  </div>
+</div>
+
+</div><!-- /#appContent -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const DATA = {"melaku": {"Continuation Training Record": [{"item": "human factor", "checked": true, "form": "N/A"}, {"item": "easapart147,part 66 regulation and MTOE", "checked": true, "form": "N/A"}, {"item": "instructional technique", "checked": true, "form": "N/A"}, {"item": "practical skill", "checked": true, "form": "N/A"}, {"item": "new technology", "checked": true, "form": "N/A"}, {"item": "train the examiner", "checked": true, "form": "N/A"}], "Initial Approval Requirements": [{"item": "Basic aircraft maintenance training", "checked": true, "form": "N/A"}, {"item": "B/A b1@b2 theoretical and practical certificate", "checked": true, "form": "N/A"}, {"item": "ECAA licence (AP)", "checked": true, "form": "N/A"}, {"item": "Train the examiner", "checked": true, "form": "N/A"}, {"item": "English language proficiency", "checked": true, "form": "N/A"}, {"item": "Personal qualification", "checked": true, "form": "N/A"}, {"item": "Current experience recording", "checked": true, "form": "N/A"}], "Qualification Record": [{"item": "Examiner approval sheet", "checked": true, "form": "N/A"}, {"item": "Examiner undertaking", "checked": true, "form": "N/A"}, {"item": "Examiner competency", "checked": true, "form": "N/A"}], "Other Qualification": []}, "abiyot": {"Continuation Training Record": [{"item": "human factor", "checked": true, "form": "N/A"}, {"item": "easapart147,part 66 regulation and MTOE", "checked": true, "form": "N/A"}, {"item": "instructional technique", "checked": true, "form": "N/A"}, {"item": "practical skill", "checked": true, "form": "N/A"}, {"item": "new technology", "checked": true, "form": "N/A"}, {"item": "train the examiner", "checked": true, "form": "N/A"}], "Initial Approval Requirements": [{"item": "Basic aircraft maintenance training", "checked": true, "form": "N/A"}, {"item": "B/A b1@b2 theoretical and practical certificate", "checked": true, "form": "N/A"}, {"item": "ECAA licence (AP)", "checked": true, "form": "N/A"}, {"item": "Train the examiner", "checked": true, "form": "N/A"}, {"item": "English language proficiency", "checked": true, "form": "N/A"}, {"item": "Personal qualification", "checked": true, "form": "N/A"}, {"item": "Current experience recording", "checked": false, "form": "N/A"}], "Qualification Record": [{"item": "Examiner approval sheet", "checked": true, "form": "N/A"}, {"item": "Examiner undertaking", "checked": true, "form": "N/A"}, {"item": "Examiner competency", "checked": true, "form": "N/A"}], "Other Qualification": []}, "gezahagn": {"Continuation Training Record": [{"item": "human factor", "checked": true, "form": "N/A"}, {"item": "easapart147,part 66 regulation and MTOE", "checked": true, "form": "N/A"}, {"item": "instructional technique", "checked": true, "form": "N/A"}, {"item": "practical skill", "checked": true, "form": "N/A"}, {"item": "new technology", "checked": true, "form": "N/A"}, {"item": "train the examiner", "checked": true, "form": "N/A"}], "Initial Approval Requirements": [{"item": "Basic aircraft maintenance training", "checked": true, "form": "N/A"}, {"item": "B/A b1@b2 theoretical and practical certificate", "checked": true, "form": "N/A"}, {"item": "ECAA licence (AP)", "checked": true, "form": "N/A"}, {"item": "Train the examiner", "checked": true, "form": "N/A"}, {"item": "English language proficiency", "checked": true, "form": "N/A"}, {"item": "Personal qualification", "checked": true, "form": "N/A"}, {"item": "Current experience recording", "checked": false, "form": "N/A"}], "Qualification Record": [{"item": "Examiner approval sheet", "checked": true, "form": "N/A"}, {"item": "Examiner undertaking", "checked": true, "form": "N/A"}, {"item": "Examiner competency", "checked": true, "form": "N/A"}], "Other Qualification": []}, "tekeste": {"Continuation Training Record": [{"item": "human factor", "checked": true, "form": "N/A"}, {"item": "easapart147,part 66 regulation and MTOE", "checked": true, "form": "N/A"}, {"item": "instructional technique", "checked": true, "form": "N/A"}, {"item": "practical skill", "checked": true, "form": "N/A"}, {"item": "new technology", "checked": true, "form": "N/A"}, {"item": "train the examiner", "checked": true, "form": "N/A"}], "Initial Approval Requirements": [{"item": "Basic aircraft maintenance training", "checked": true, "form": "N/A"}, {"item": "B/A b1@b2 theoretical and practical certificate", "checked": true, "form": "N/A"}, {"item": "ECAA licence (AP)", "checked": true, "form": "N/A"}, {"item": "Train the examiner", "checked": true, "form": "N/A"}, {"item": "English language proficiency", "checked": true, "form": "N/A"}, {"item": "Personal qualification", "checked": true, "form": "N/A"}, {"item": "Current experience recording", "checked": false, "form": "N/A"}], "Qualification Record": [{"item": "Examiner approval sheet", "checked": true, "form": "N/A"}, {"item": "Examiner undertaking", "checked": true, "form": "N/A"}, {"item": "Examiner competency", "checked": true, "form": "N/A"}], "Other Qualification": []}, "wongel": {"Continuation Training Record": [{"item": "human factor", "checked": true, "form": "N/A"}, {"item": "easapart147,part 66 regulation and MTOE", "checked": true, "form": "N/A"}, {"item": "instructional technique", "checked": true, "form": "N/A"}, {"item": "practical skill", "checked": true, "form": "N/A"}, {"item": "new technology", "checked": true, "form": "N/A"}, {"item": "train the examiner", "checked": true, "form": "N/A"}], "Initial Approval Requirements": [{"item": "Basic aircraft maintenance training", "checked": false, "form": "N/A"}, {"item": "B/A b1@b2 theoretical and practical certificate", "checked": true, "form": "N/A"}, {"item": "ECAA licence (AP)", "checked": true, "form": "N/A"}, {"item": "Train the examiner", "checked": true, "form": "N/A"}, {"item": "English language proficiency", "checked": true, "form": "N/A"}, {"item": "Personal qualification", "checked": true, "form": "N/A"}, {"item": "Current experience recording", "checked": true, "form": "N/A"}], "Qualification Record": [{"item": "Examiner approval sheet", "checked": true, "form": "N/A"}, {"item": "Examiner undertaking", "checked": true, "form": "N/A"}, {"item": "Examiner competency", "checked": true, "form": "N/A"}], "Other Qualification": []}, "yohanis.gy": {"Continuation Training Record": [{"item": "human factor", "checked": true, "form": "N/A"}, {"item": "easapart147,part 66 regulation and MTOE", "checked": true, "form": "N/A"}, {"item": "instructional technique", "checked": true, "form": "N/A"}, {"item": "practical skill", "checked": true, "form": "N/A"}, {"item": "new technology", "checked": true, "form": "N/A"}, {"item": "train the examiner", "checked": true, "form": "N/A"}], "Initial Approval Requirements": [{"item": "Basic aircraft maintenance training", "checked": true, "form": "N/A"}, {"item": "B/A b1@b2 theoretical and practical certificate", "checked": true, "form": "N/A"}, {"item": "ECAA licence (AP)", "checked": true, "form": "N/A"}, {"item": "Train the examiner", "checked": true, "form": "N/A"}, {"item": "English language proficiency", "checked": true, "form": "N/A"}, {"item": "Personal qualification", "checked": true, "form": "N/A"}, {"item": "Current experience recording", "checked": true, "form": "N/A"}], "Qualification Record": [{"item": "Examiner approval sheet", "checked": true, "form": "N/A"}, {"item": "Examiner undertaking", "checked": true, "form": "N/A"}, {"item": "Examiner competency", "checked": true, "form": "N/A"}], "Other Qualification": []}, "egigayehu.l": {"Continuation Training Record": [{"item": "human factor", "checked": true, "form": "N/A"}, {"item": "easapart147,part 66 regulation and MTOE", "checked": true, "form": "N/A"}, {"item": "instructional technique", "checked": true, "form": "N/A"}, {"item": "practical skill", "checked": true, "form": "N/A"}, {"item": "new technology", "checked": true, "form": "N/A"}, {"item": "train the examiner", "checked": true, "form": "N/A"}], "Initial Approval Requirements": [{"item": "Basic aircraft maintenance training", "checked": true, "form": "N/A"}, {"item": "B/A b1@b2 theoretical and practical certificate", "checked": true, "form": "N/A"}, {"item": "ECAA licence (AP)", "checked": true, "form": "N/A"}, {"item": "Train the examiner", "checked": true, "form": "N/A"}, {"item": "English language proficiency", "checked": true, "form": "N/A"}, {"item": "Personal qualification", "checked": true, "form": "N/A"}, {"item": "Current experience recording", "checked": true, "form": "N/A"}], "Qualification Record": [{"item": "Examiner approval sheet", "checked": true, "form": "N/A"}, {"item": "Examiner undertaking", "checked": true, "form": "N/A"}, {"item": "Examiner competency", "checked": true, "form": "N/A"}], "Other Qualification": []}, "akalu.a": {"Continuation Training Record": [{"item": "human factor", "checked": true, "form": "N/A"}, {"item": "easapart147,part 66 regulation and MTOE", "checked": true, "form": "N/A"}, {"item": "instructional technique", "checked": true, "form": "N/A"}, {"item": "practical skill", "checked": true, "form": "N/A"}, {"item": "new technology", "checked": true, "form": "N/A"}, {"item": "train the examiner", "checked": true, "form": "N/A"}], "Initial Approval Requirements": [{"item": "Basic aircraft maintenance training", "checked": true, "form": "N/A"}, {"item": "B/A b1@b2 theoretical and practical certificate", "checked": true, "form": "N/A"}, {"item": "ECAA licence (AP)", "checked": true, "form": "N/A"}, {"item": "Train the examiner", "checked": true, "form": "N/A"}, {"item": "English language proficiency", "checked": true, "form": "N/A"}, {"item": "Personal qualification", "checked": true, "form": "N/A"}, {"item": "Current experience recording", "checked": false, "form": "N/A"}], "Qualification Record": [{"item": "Examiner approval sheet", "checked": true, "form": "N/A"}, {"item": "Examiner undertaking", "checked": true, "form": "N/A"}, {"item": "Examiner competency", "checked": true, "form": "N/A"}], "Other Qualification": []}};
+
+// ===== Cloud backend (Supabase) configuration =====
+// Fill these in with your own Supabase project's URL and anon (public) key
+// to make this a real shared/dynamic site: admin edits and candidate data
+// then sync for every visitor, from any device, instead of staying only in
+// one browser's local storage. Leave them blank and the site keeps working
+// exactly as before (each browser saves locally only).
+//   1. Create a free project at https://supabase.com
+//   2. Project Settings -> API -> copy "Project URL" and "anon public" key
+//   3. Paste them below
+const SUPABASE_URL = 'https://rlsizegibydvjgggrczo.supabase.co';        // e.g. 'https://xxxxxxxxxxxx.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsc2l6ZWdpYnlkdmpnZ2dyY3pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1MTcwMTEsImV4cCI6MjEwMDA5MzAxMX0.WBY6QEREmAx2ZI60FMGrz2ZwJQ-kp0hbb2d1lph6gVY';   // e.g. 'eyJhbGciOi...'
+
+const supabaseClient = (SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20 && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+// ===== Public "Fill a Form" flow =====
+// Forms are filled in directly on this page (no external redirect). Each
+// submission is stored (Supabase if configured, otherwise this browser's
+// local storage) and shows up under Notifications in the main menu, where
+// it can be downloaded as a Word document.
+
+// The form-title used as a fallback label when generating a Word document
+// for a submission that isn't one of the known EAA forms below.
+const PDF_FORM_TITLE = 'Form Submission Record';
+
+// Letterhead metadata for each fillable EAA form, taken from the official form.
+const FORM_DEFS = {
+  EAA_F076: {
+    formNo: 'EAA F- 076',
+    title: 'EXPERIENCE RECORDING FORM',
+    revision: 'Revision No. 0',
+    date: 'April, 2023',
+    label: 'EAA F-076 \u2014 Experience Recording Form'
+  },
+  EAA_F033: {
+    formNo: 'EAA F- 033',
+    title: 'PERSONNEL QUALIFICATION RECORD FORM',
+    revision: 'Revision No. 3',
+    date: 'Jan-2018',
+    label: 'EAA F-033 \u2014 Personnel Qualification Record Form'
+  }
+};
+
+function openFormChoice(){
+  document.getElementById('formChoiceOverlay').classList.add('open');
+}
+function closeFormChoice(){
+  document.getElementById('formChoiceOverlay').classList.remove('open');
+}
+document.getElementById('formChoiceOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='formChoiceOverlay') closeFormChoice();
+});
+
+function addNewFormComingSoon(){
+  closeFormChoice();
+  showPrompt('Add New Form', null, null, {
+    isConfirm:true, confirmText:'OK',
+    message:'More EAA forms will be added here soon. Contact the training-quality team if you need a specific form added.'
+  });
+}
+
+// ===== "How to Fill" reference guides (public, pre-login) =====
+
+let howToFillDirty = false; // true when a file has been added but not yet saved
+
+function openHowToFill(){
+  howToFillDirty = false;
+  renderHowToFillBody();
+  document.getElementById('howToFillOverlay').classList.add('open');
+}
+function closeHowToFill(){
+  document.getElementById('howToFillOverlay').classList.remove('open');
+}
+document.getElementById('howToFillOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='howToFillOverlay') closeHowToFill();
+});
+
+function guideIcon(type){
+  if(type === 'link') return '&#128279;';
+  if(type && type.startsWith('image/')) return '&#128444;&#65039;';
+  return '&#128196;';
+}
+
+function renderHowToFillBody(){
+  const body = document.getElementById('howToFillBody');
+  const signedIn = currentRole === 'admin' || currentRole === 'user';
+
+  const listHtml = howToFillGuides.length === 0
+    ? `<p class="empty-note">No files added yet.</p>`
+    : `<div class="guide-list">${howToFillGuides.map((g, idx) => `
+        <div class="guide-item">
+          <div class="guide-icon">${guideIcon(g.type)}</div>
+          <div class="guide-title"><a href="${g.url}" target="_blank" rel="noopener">${g.title}</a></div>
+          ${signedIn ? `<button class="guide-delete" type="button" title="Remove file" onclick="deleteGuide(${idx})">&times;</button>` : ''}
+        </div>
+      `).join('')}</div>`;
+
+  const addSection = signedIn ? `
+      <div class="guide-add-form">
+        <input type="file" id="guideFileInput" accept="application/pdf,image/*" style="display:none" onchange="stageNewGuideFile(this)">
+        <button type="button" class="add-btn" onclick="document.getElementById('guideFileInput').click()">&#128206; Add File</button>
+        <button type="button" class="ff-submit-btn" onclick="saveHowToFillGuides()">&#128190; Save</button>
+        <span class="save-status" style="color:var(--muted);">${howToFillDirty ? 'Unsaved changes' : ''}</span>
+      </div>
+    ` : '';
+
+  body.innerHTML = listHtml + addSection;
+}
+
+async function stageNewGuideFile(inputEl){
+  const file = inputEl.files && inputEl.files[0];
+  if(!file) return;
+  if(file.size > MAX_FILE_BYTES){
+    showPrompt('File too large', null, null, { isConfirm:true, confirmText:'OK', message:'Please choose a file under 8 MB.' });
+    inputEl.value = '';
+    return;
+  }
+  const title = file.name.replace(/\.[^.]+$/, '');
+
+  if(supabaseClient){
+    try{
+      const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
+      const path = `how-to-fill/${Date.now()}_${safeName}`;
+      const { error: upErr } = await supabaseClient.storage.from('attachments').upload(path, file, { upsert:true });
+      if(upErr) throw upErr;
+      const { data: pub } = supabaseClient.storage.from('attachments').getPublicUrl(path);
+      howToFillGuides.push({ title, url: pub.publicUrl, type: file.type });
+      howToFillDirty = true;
+      markDirty();
+      renderHowToFillBody();
+      return;
+    }catch(e){
+      console.error('Cloud upload failed for guide, falling back to local-only:', e);
+    }
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    howToFillGuides.push({ title, url: e.target.result, type: file.type });
+    howToFillDirty = true;
+    markDirty();
+    renderHowToFillBody();
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveHowToFillGuides(){
+  await saveAll();
+  howToFillDirty = false;
+  renderHowToFillBody();
+}
+
+function deleteGuide(idx){
+  if(currentRole !== 'admin' && currentRole !== 'user') return;
+  showPrompt('Remove this file?', null, async ()=>{
+    howToFillGuides.splice(idx, 1);
+    await saveAll();
+    howToFillDirty = false;
+    renderHowToFillBody();
+  }, { isConfirm:true, confirmText:'Remove', message:'This will remove it for everyone who visits this page.' });
+}
+
+// ----- Rendering the fillable form itself -----
+
+function ffLetterheadHTML(def){
+  return `
+  <div class="ff-letterhead">
+    <table>
+      <tr>
+        <td class="ff-logo-cell" style="width:18%;">ETHIOPIAN<br>AVIATION ACADEMY</td>
+        <td class="ff-title-cell" style="width:57%;">ETHIOPIAN AIRLINES AVIATION ACADEMY<br>MAINTENANCE TRAINING ORGANIZATION<br>EXPOSITION FORMS</td>
+        <td class="ff-rev-cell" style="width:25%;">${def.revision}</td>
+      </tr>
+      <tr>
+        <td class="ff-formname-cell" colspan="2">${def.title}</td>
+        <td class="ff-date-cell">${def.date}</td>
+      </tr>
+    </table>
+  </div>`;
+}
+
+function ffDetailsTable(tbodyId, prefix, count){
+  let rows = '';
+  for(let i=1;i<=count;i++){
+    rows += `<tr><td class="ff-item-no">${i}</td><td><input type="text" data-field="${prefix} ${i}"></td></tr>`;
+  }
+  return `<div class="ff-table-wrap"><table class="ff-table">
+    <thead><tr><th>Item</th><th>Details</th></tr></thead>
+    <tbody id="${tbodyId}">${rows}</tbody>
+  </table></div>
+  <button type="button" class="ff-add-row-btn" onclick="addFFTableRow('${tbodyId}', ['${prefix} {n}'])">&#10133; Add Row</button>`;
+}
+
+// Appends one more row to a fillable-form table, matching the existing rows'
+// layout. fieldTemplates is a list of data-field name patterns with {n}
+// standing in for the new row's item number.
+function addFFTableRow(tbodyId, fieldTemplates){
+  const tbody = document.getElementById(tbodyId);
+  if(!tbody) return;
+  const nextNum = tbody.children.length + 1;
+  const tr = document.createElement('tr');
+  let cellsHtml = `<td class="ff-item-no">${nextNum}</td>`;
+  fieldTemplates.forEach(tpl=>{
+    const fieldName = tpl.replace('{n}', nextNum);
+    cellsHtml += `<td><input type="text" data-field="${fieldName}"></td>`;
+  });
+  tr.innerHTML = cellsHtml;
+  tbody.appendChild(tr);
+}
+
+function renderF076Fields(){
+  const def = FORM_DEFS.EAA_F076;
+  let rows = '';
+  for(let i=1;i<=10;i++){
+    rows += `
+      <tr>
+        <td class="ff-item-no">${i}</td>
+        <td><input type="text" data-field="Item ${i} - Details"></td>
+        <td><input type="text" data-field="Item ${i} - Period"></td>
+        <td><input type="text" data-field="Item ${i} - Total Hrs"></td>
+      </tr>`;
+  }
+  return `
+    ${ffLetterheadHTML(def)}
+    <div class="ff-section">
+      <h4>General Information</h4>
+      <div class="ff-fields">
+        <div class="ff-field-row"><label>Name</label><input type="text" data-field="Name"></div>
+        <div class="ff-field-row"><label>Position within the organization</label><input type="text" data-field="Position within the organization"></div>
+        <div class="ff-field-row"><label>Date of joining Ethiopian Airlines</label><input type="text" data-field="Date of joining Ethiopian Airlines"></div>
+        <div class="ff-field-row"><label>Staff ID number</label><input type="text" data-field="Staff ID number"></div>
+        <div class="ff-field-row"><label>Issue date of the COR</label><input type="text" data-field="Issue date of the COR"></div>
+      </div>
+    </div>
+    <div class="ff-section">
+      <h4>Experience Summary</h4>
+      <div class="ff-fields">
+        <div class="ff-field-row"><label>Relevant to (Aircraft / Engine combination)</label><input type="text" data-field="Experience relevant to (Aircraft / Engine combination)"></div>
+      </div>
+    </div>
+    <div class="ff-section">
+      <h4>Experience Details</h4>
+      <div class="ff-table-wrap">
+        <table class="ff-table">
+          <thead><tr><th>Item</th><th>Details</th><th>Period</th><th>Total Hrs.</th></tr></thead>
+          <tbody id="f076ExpBody">${rows}</tbody>
+          <tfoot><tr><td></td><td colspan="2" style="text-align:right;font-weight:700;padding:8px;">Total</td><td><input type="text" data-field="Total Hrs (overall)"></td></tr></tfoot>
+        </table>
+      </div>
+      <button type="button" class="ff-add-row-btn" onclick="addFFTableRow('f076ExpBody', ['Item {n} - Details','Item {n} - Period','Item {n} - Total Hrs'])">&#10133; Add Row</button>
+    </div>
+    <div class="ff-section">
+      <h4>Sign-off</h4>
+      <div class="ff-signoff">
+        <div class="ff-signoff-row">
+          <div><label>Completed by</label><input type="text" data-field="Completed by"></div>
+          <div><label>Date</label><input type="text" data-field="Completed - Date"></div>
+        </div>
+        <div class="ff-signoff-row">
+          <div><label>Approved by (Training Manager)</label><input type="text" data-field="Approved by (Training Manager)"></div>
+          <div><label>Date</label><input type="text" data-field="Approved - Date"></div>
+        </div>
+      </div>
+    </div>
+    <div class="ff-submit-bar">
+      <button type="button" class="ff-submit-btn" onclick="submitFillableForm('EAA_F076')">Submit</button>
+    </div>
+  `;
+}
+
+function renderF033Fields(){
+  const def = FORM_DEFS.EAA_F033;
+  return `
+    ${ffLetterheadHTML(def)}
+    <div class="ff-section">
+      <h4>General Information</h4>
+      <div class="ff-fields">
+        <div class="ff-field-row"><label>Name</label><input type="text" data-field="Name"></div>
+        <div class="ff-field-row"><label>Position within the organisation</label><input type="text" data-field="Position within the organisation"></div>
+        <div class="ff-field-row"><label>Date of joining Ethiopian Airlines</label><input type="text" data-field="Date of joining Ethiopian Airlines"></div>
+        <div class="ff-field-row"><label>Staff ID number</label><input type="text" data-field="Staff ID number"></div>
+      </div>
+    </div>
+    <div class="ff-section"><h4>Qualification Relevant to the Position</h4>${ffDetailsTable('f033QualBody', 'Qualification', 5)}</div>
+    <div class="ff-section"><h4>Experience Relevant to the Position</h4>${ffDetailsTable('f033ExpBody', 'Experience', 5)}</div>
+    <div class="ff-section"><h4>Technical Qualification Aircraft</h4>${ffDetailsTable('f033TechBody', 'Technical Qualification', 5)}</div>
+    <div class="ff-section"><h4>Professional Qualification</h4>${ffDetailsTable('f033ProfBody', 'Professional Qualification', 6)}</div>
+    <div class="ff-section"><h4>Leadership Qualification</h4>${ffDetailsTable('f033LeadBody', 'Leadership Qualification', 6)}</div>
+    <div class="ff-section">
+      <h4>Sign-off</h4>
+      <div class="ff-signoff">
+        <div class="ff-signoff-row">
+          <div><label>Approved By (Training Manager)</label><input type="text" data-field="Approved By (Training Manager)"></div>
+          <div><label>Date</label><input type="text" data-field="Approved - Date"></div>
+        </div>
+      </div>
+    </div>
+    <div class="ff-submit-bar">
+      <button type="button" class="ff-submit-btn" onclick="submitFillableForm('EAA_F033')">Submit</button>
+    </div>
+  `;
+}
+
+function renderFillFormHTML(formKey){
+  if(formKey === 'EAA_F076') return renderF076Fields();
+  if(formKey === 'EAA_F033') return renderF033Fields();
+  return '';
+}
+
+function openFillForm(formKey){
+  const def = FORM_DEFS[formKey];
+  if(!def) return;
+  closeFormChoice();
+  document.getElementById('fillFormTitle').textContent = def.formNo + ' \u2014 ' + def.title.charAt(0) + def.title.slice(1).toLowerCase();
+  document.getElementById('fillFormBody').innerHTML = renderFillFormHTML(formKey);
+  document.getElementById('fillFormOverlay').classList.add('open');
+}
+function closeFillForm(){
+  document.getElementById('fillFormOverlay').classList.remove('open');
+}
+document.getElementById('fillFormOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='fillFormOverlay') closeFillForm();
+});
+
+// ----- Submitting & storing a filled-in form -----
+
+const LOCAL_SUBMISSIONS_KEY = 'eauQualPortal_localSubmissions_v1';
+
+function readLocalSubmissions(){
+  try{ return JSON.parse(localStorage.getItem(LOCAL_SUBMISSIONS_KEY) || '[]'); }
+  catch(e){ return []; }
+}
+function writeLocalSubmissions(list){
+  try{ localStorage.setItem(LOCAL_SUBMISSIONS_KEY, JSON.stringify(list)); }
+  catch(e){ console.error('Could not save submission locally:', e); }
+}
+
+async function submitFillableForm(formKey){
+  const def = FORM_DEFS[formKey];
+  const container = document.getElementById('fillFormBody');
+  const fieldEls = container.querySelectorAll('[data-field]');
+  const answers = {};
+  fieldEls.forEach(el=>{ answers[el.dataset.field] = el.value; });
+  answers.__formKey = formKey;
+  answers.__formLabel = def.label;
+
+  const record = {
+    answers,
+    submitted_at: new Date().toISOString(),
+    is_read: false
+  };
+
+  let storedToCloud = false;
+  if(supabaseClient){
+    try{
+      const { error } = await supabaseClient.from('form_submissions').insert(record);
+      if(error) throw error;
+      storedToCloud = true;
+    }catch(e){
+      console.error('Cloud submission failed, saving locally instead:', e);
+    }
+  }
+  if(!storedToCloud){
+    const local = readLocalSubmissions();
+    record.id = 'local_' + Date.now();
+    local.unshift(record);
+    writeLocalSubmissions(local);
+  }
+
+  closeFillForm();
+  refreshNotifBadge();
+  showPrompt('Submitted', null, null, {
+    isConfirm:true, confirmText:'OK',
+    message:'Thank you \u2014 your ' + def.formNo + ' has been submitted for review.'
+  });
+}
+
+const CATEGORIES = [
+  {
+    key: "Continuation Training Record",
+    label: "Knowledge Instructor",
+    desc: "Continuation training record — human factors, EASA Part-147 / Part-66 & MTOE, instructional technique, practical skill, new technology and train-the-examiner modules."
+  },
+  {
+    key: "Qualification Record",
+    label: "Knowledge Examiner",
+    desc: "Qualification record — examiner approval sheet, examiner undertaking and examiner competency sign-off."
+  },
+  {
+    key: "Initial Approval Requirements",
+    label: "Practical Instructor",
+    desc: "Initial approval requirements — basic aircraft maintenance training, B1/B2 theoretical & practical certificate, ECAA licence, English proficiency, personal qualification and current experience."
+  },
+  {
+    key: "Other Qualification",
+    label: "Practical Assessor",
+    desc: "Other qualification — additional assessor-specific records and endorsements on file."
+  }
+];
+
+// ===== Custom in-page dialog (replaces native prompt()/confirm(), which are
+// blocked inside sandboxed previews) =====
+let pendingPromptCallback = null;
+
+function showPrompt(title, defaultValue, onConfirm, opts){
+  opts = opts || {};
+  document.getElementById('promptTitle').textContent = title;
+  const inputWrap = document.getElementById('promptInputWrap');
+  const input = document.getElementById('promptInput');
+  const msg = document.getElementById('promptMessage');
+  if(opts.isConfirm){
+    inputWrap.style.display = 'none';
+    msg.textContent = opts.message || '';
+    msg.style.display = 'block';
+  } else {
+    inputWrap.style.display = 'block';
+    msg.style.display = 'none';
+    input.value = defaultValue || '';
+  }
+  document.getElementById('promptConfirmBtn').textContent = opts.confirmText || 'Save';
+  pendingPromptCallback = onConfirm;
+  document.getElementById('promptOverlay').classList.add('open');
+  if(!opts.isConfirm){
+    setTimeout(()=>{ input.focus(); input.select(); }, 30);
+  }
+}
+function promptConfirm(){
+  const inputWrap = document.getElementById('promptInputWrap');
+  const input = document.getElementById('promptInput');
+  const isConfirmMode = inputWrap.style.display === 'none';
+  const value = isConfirmMode ? true : input.value.trim();
+  document.getElementById('promptOverlay').classList.remove('open');
+  const cb = pendingPromptCallback;
+  pendingPromptCallback = null;
+  if(cb) cb(value);
+}
+function promptCancel(){
+  document.getElementById('promptOverlay').classList.remove('open');
+  pendingPromptCallback = null;
+}
+document.getElementById('promptOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='promptOverlay') promptCancel();
+});
+document.getElementById('promptInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){ e.preventDefault(); promptConfirm(); }
+});
+
+// ===== Authentication =====
+// Note: this is a static, client-only page (no server/database behind it),
+// so this cannot provide real backend security. Passwords are hashed
+// in-browser (Web Crypto SHA-256 where available, otherwise a fallback
+// hash) so the plain password isn't sitting in the page as readable text,
+// but a determined person with the file could still work around a
+// client-only login. Use a real backend if this ever needs to protect
+// sensitive records for real.
+function simpleHash(str){
+  let hash = 5381;
+  for(let i=0;i<str.length;i++){
+    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return 'fb' + (hash >>> 0).toString(16);
+}
+async function hashText(str){
+  try{
+    if(window.crypto && window.crypto.subtle){
+      const enc = new TextEncoder().encode(str);
+      const buf = await window.crypto.subtle.digest('SHA-256', enc);
+      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){ /* fall through to simple hash */ }
+  return simpleHash(str);
+}
+
+// (auth login-check functions below; persistence/save functions are
+// defined further down, after DATA/displayNames/formNumbers/selectedByCategory exist)
+const credentials = { username: 'Birhan', passwordHash: null };          // admin
+const userCredentials = { username: 'EAU', passwordHash: null };         // limited "user" role
+
+// Self-service signup requests. Each entry: { username, passwordHash,
+// approved, requestedAt }. New requests start unapproved and only become
+// usable to sign in once an admin approves them from Notifications.
+let userAccounts = [];
+
+// Reference guides shown under the public "How to Fill" button. Seeded with
+// two filled example PDFs; admins can add more (PDF/image/link) from the
+// How to Fill panel itself, gated by the admin password.
+let howToFillGuides = [];
+
+let loginRoleSelected = 'admin'; // which tab is chosen on the login screen right now
+let currentRole = null;          // 'admin' | 'user' | null (not signed in)
+
+function isAdmin(){ return currentRole === 'admin'; }
+
+function setLoginRole(role){
+  loginRoleSelected = role;
+  document.getElementById('roleTabAdmin').classList.toggle('active', role==='admin');
+  document.getElementById('roleTabUser').classList.toggle('active', role==='user');
+  document.getElementById('loginError').textContent = '';
+}
+
+function applyRolePermissions(){
+  // Re-render everything so templates rebuild with the right buttons/inputs
+  // enabled or hidden for the signed-in role. Real enforcement lives inside
+  // the render functions themselves (checking isAdmin()), not just CSS, so
+  // a user account genuinely cannot trigger admin-only actions from the UI.
+  const changeLoginBtn = document.getElementById('changeLoginBtn');
+  if(changeLoginBtn) changeLoginBtn.style.display = isAdmin() ? '' : 'none';
+  renderRibbon();
+  renderAddRow();
+  renderGrid();
+}
+
+async function attemptLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+
+  if(loginRoleSelected === 'admin'){
+    if(!credentials.passwordHash){
+      errEl.textContent = 'Still starting up \u2014 please try again in a moment.';
+      return;
+    }
+    const hash = await hashText(p);
+    if(u === credentials.username && hash === credentials.passwordHash){
+      completeLogin('admin');
+    } else {
+      errEl.textContent = 'Incorrect username or password.';
+    }
+    return;
+  }
+
+  // 'user' role: check the fixed default account first, then self-signup accounts
+  if(!userCredentials.passwordHash){
+    errEl.textContent = 'Still starting up \u2014 please try again in a moment.';
+    return;
+  }
+  const hash = await hashText(p);
+  if(u === userCredentials.username && hash === userCredentials.passwordHash){
+    completeLogin('user');
+    return;
+  }
+
+  const account = userAccounts.find(a => a.username === u);
+  if(account && hash === account.passwordHash){
+    if(account.approved){
+      completeLogin('user');
+    } else {
+      errEl.textContent = 'This account is still waiting for admin approval.';
+    }
+    return;
+  }
+
+  errEl.textContent = 'Incorrect username or password.';
+}
+function completeLogin(role){
+  document.getElementById('loginError').textContent = '';
+  currentRole = role;
+  applyRolePermissions();
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appContent').style.display = 'block';
+  document.getElementById('loginPass').value = '';
+  refreshNotifBadge();
+}
+document.getElementById('loginUser').addEventListener('keydown', (e)=>{ if(e.key==='Enter') attemptLogin(); });
+document.getElementById('loginPass').addEventListener('keydown', (e)=>{ if(e.key==='Enter') attemptLogin(); });
+
+function openSignup(){
+  ['signupUser','signupPass','signupPass2'].forEach(id=>{ document.getElementById(id).value = ''; });
+  document.getElementById('signupError').textContent = '';
+  document.getElementById('signupSuccess').textContent = '';
+  document.getElementById('signupOverlay').classList.add('open');
+}
+function closeSignup(){
+  document.getElementById('signupOverlay').classList.remove('open');
+}
+document.getElementById('signupOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='signupOverlay') closeSignup();
+});
+
+async function submitSignup(){
+  const username = document.getElementById('signupUser').value.trim();
+  const pass = document.getElementById('signupPass').value;
+  const pass2 = document.getElementById('signupPass2').value;
+  const errEl = document.getElementById('signupError');
+  const successEl = document.getElementById('signupSuccess');
+  errEl.textContent = '';
+  successEl.textContent = '';
+
+  if(!username || !pass){
+    errEl.textContent = 'Please fill in a username and password.';
+    return;
+  }
+  if(pass !== pass2){
+    errEl.textContent = 'Passwords do not match.';
+    return;
+  }
+  if(pass.length < 4){
+    errEl.textContent = 'Please choose a password at least 4 characters long.';
+    return;
+  }
+  if(username === credentials.username || username === userCredentials.username){
+    errEl.textContent = 'That username is already taken. Please choose another.';
+    return;
+  }
+  if(userAccounts.some(a => a.username === username)){
+    errEl.textContent = 'That username has already been requested. Please choose another, or wait for admin approval.';
+    return;
+  }
+
+  const passwordHash = await hashText(pass);
+  userAccounts.push({ username, passwordHash, approved: false, requestedAt: new Date().toISOString() });
+  await saveAll();
+  successEl.textContent = 'Request submitted! An admin needs to approve your account before you can sign in.';
+  ['signupUser','signupPass','signupPass2'].forEach(id=>{ document.getElementById(id).value = ''; });
+}
+
+function logout(){
+  document.getElementById('appContent').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginError').textContent = '';
+  currentRole = null;
+  setLoginRole('admin');
+}
+
+function openCredModal(){
+  if(!isAdmin()) return;
+  ['credCurUser','credCurPass','credNewUser','credNewPass','credNewPass2'].forEach(id=>{
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('credError1').textContent = '';
+  document.getElementById('credError2').textContent = '';
+  document.getElementById('credSuccess').textContent = '';
+  document.getElementById('credOverlay').classList.add('open');
+}
+function closeCredModal(){
+  document.getElementById('credOverlay').classList.remove('open');
+}
+document.getElementById('credOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='credOverlay') closeCredModal();
+});
+
+async function submitCredChange(){
+  if(!isAdmin()) return;
+  const curUser = document.getElementById('credCurUser').value.trim();
+  const curPass = document.getElementById('credCurPass').value;
+  const newUser = document.getElementById('credNewUser').value.trim();
+  const newPass = document.getElementById('credNewPass').value;
+  const newPass2 = document.getElementById('credNewPass2').value;
+  const err1 = document.getElementById('credError1');
+  const err2 = document.getElementById('credError2');
+  const success = document.getElementById('credSuccess');
+  err1.textContent = ''; err2.textContent = ''; success.textContent = '';
+
+  const curHash = await hashText(curPass);
+  if(curUser !== credentials.username || curHash !== credentials.passwordHash){
+    err1.textContent = 'Current username or password is incorrect.';
+    return;
+  }
+  if(!newUser && !newPass){
+    err2.textContent = 'Enter a new username and/or a new password to change.';
+    return;
+  }
+  if(newPass && newPass !== newPass2){
+    err2.textContent = 'New password and confirmation do not match.';
+    return;
+  }
+  if(newUser) credentials.username = newUser;
+  if(newPass) credentials.passwordHash = await hashText(newPass);
+  await saveAll(); // credential changes are saved immediately so a login change is never lost
+  success.textContent = 'Credentials updated and saved. Use the new details next time you sign in.';
+  document.getElementById('credCurPass').value = '';
+  document.getElementById('credNewPass').value = '';
+  document.getElementById('credNewPass2').value = '';
+}
+
+function niceName(sheetKey){
+  return sheetKey
+    .replace(/\./g,' ')
+    .split(/[\s_]+/)
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+function initials(name){
+  const parts = name.split(' ').filter(Boolean);
+  return (parts[0]?.[0]||'').toUpperCase() + (parts[1]?.[0]||'').toUpperCase();
+}
+
+// Editable display names (starts from the sheet name, can be renamed by the admin)
+const displayNames = {};
+Object.keys(DATA).forEach(k => displayNames[k] = niceName(k));
+function getName(k){ return displayNames[k] || niceName(k); }
+
+// Master list of official EAA quality-system forms available for attachment
+const EAA_FORM_LIST = [
+  "EAA F-011 Knowledge Instructor Approval Sheet Form",
+  "EAA F-012 Course Attendance Register (First Day) Form",
+  "EAA F-012a Daily Attendance Register Form",
+  "EAA F-013 SPARE",
+  "EAA F-014 Examiner Approval Sheet Form",
+  "EAA F-015 Second Site Audit Form",
+  "EAA F-016 Course Delivery Assessment Form",
+  "EAA F-017 Instructions to Candidates Form",
+  "EAA F-018 Instructions to Invigilators Form",
+  "EAA F-019 Aircraft Visit Form",
+  "EAA F-020 Examination Flow Instruction Form",
+  "EAA F-021 Incident Record Form",
+  "EAA F-022 Course Assessment Record Form",
+  "EAA F-023 Question Analysis Sheet Form",
+  "EAA F-024 Knowledge Instructor Undertakings Form",
+  "EAA F-024a Practical Instructor Undertakings Form",
+  "EAA F-024b Practical Assessor Undertakings Form",
+  "EAA F-024c Examiner Undertakings Form",
+  "EAA F-025 MTOE Revision Receipt Form",
+  "EAA F-026 Individual Course Audit Form",
+  "EAA F-027 Ex-Base Training Checklist Form",
+  "EAA F-028 Instructors Continuation Training Log Form",
+  "EAA F-029 Practical Training Attendance Register Form",
+  "EAA F-030 Aircraft Task Assignment for Practical Training Form",
+  "EAA F-031 Practical Instructor's approval sheet Form",
+  "EAA F-032 Practical Assessor's Approval sheet Form",
+  "EAA F-033 Personnel Qualification Record Form",
+  "EAA F-034 Quality Auditor Approval Sheet Form",
+  "EAA F-035 Quality Auditor Undertakings Form",
+  "EAA F-036 Examination Attendance Register Form",
+  "EAA F-037 Trainee Background Summary Form",
+  "EAA F-037a Trainee Background Analysis and Conclusion Form",
+  "EAA F-038 Practical Instructor's and Assessor's Competency Assessment Form",
+  "EAA F-039 Knowledge Instructor's Competency Assessment Form",
+  "EAA F-040 Examiner's Competency Assessment Form",
+  "EAA F-041 New Question Generation and Validation Form",
+  "EAA F-042 Quality auditor's Competency Assessment Form",
+  "EAA F-043 Post Exam Question Analysis Form",
+  "EAA F-044 Certificate of Recognition (COR) Issuance Control Form",
+  "EAA F-045 Post Course Analysis Record and Action Follow up Form",
+  "EAA F-046 Exam Paper Validation Checklist Form (New)",
+  "EAA F-047 Audit Compliance Status Checklist Form (New)",
+  "EAA F-048a EASA Approved Knowledge Instructor Personnel Record File Checklist Form",
+  "EAA F-048b EASA Approved Knowledge Examiner Personnel Record File Checklist Form",
+  "EAA F-048c EASA Approved Practical Instructor Personnel Record File Checklist Form",
+  "EAA F-048d EASA Approved Practical Assessor Personnel Record File Checklist Form",
+  "EAA F-049c B737-600/700/800/900 Question Distribution of ATAs per Exam Phase Form",
+  "EAA F-049d B777-200/300 (GE90) Question Distribution of ATAs per Exam Phase Form",
+  "EAA F-050 Examination Analysis Report Form",
+  "EAA F-051 Consecutive Exams Commonality Verification Form",
+  "EAA F-052 Question Raised by Trainees Form",
+  "EAA F-053 Exam bank question number status report",
+  "EAA F-054 CBT assessment form",
+  "EAA F-055 Practical training instructions guideline",
+  "EAA F-056 INSTRUCTION FOR MANPOWER PLANNING",
+  "EAA F-057a B737-600/700/800/900 (CFM 56) Exam Bank question level review report",
+  "EAA F-057b B777-200/300 (GE90) Exam Bank question level review report",
+  "EAA F-058 PRACTICAL TRAINING AND ASSESSMENT LOGBOOK DEVELOPMENT PROCEDURE",
+  "EAA F-059 PRACTICAL TRAINING CONDUCT PROCEDURE",
+  "EAA F-060 PRACTICAL TRAINING ASSESSMENT PROCEDURE",
+  "EAA F-061 PRACTICAL INSTRUCTOR/ASSESSOR COMMENT",
+  "EAA F-062 PRODUCT AUDIT PROCEDURE",
+  "EAA F-063 EXAM BANK QUESTION VALIDATION CHECK LIST",
+  "EAA F-064 CLASSROOM INSPECTION CHECKLIST",
+  "EAA F-065 THEORETICAL TRAINING DELIVERY PROCEDURE",
+  "EAA F-066 COURSE DOCUMENTS REVISION CHECKLIST",
+  "EAA F-067 QUALITY ASSURANCE PROGRAM",
+  "EAA F-068 EASA approved instructors, examiners & assessors record",
+  "EAA F-069 Course material revision request form",
+  "EAA F-070 Instructors practical skill training",
+  "EAA F-071 Course material preparation and revision procedure",
+  "EAA F-072",
+  "EAA F-073 RESERVED",
+  "EAA F-074 PROCEDURE FOR QUALIFYING INSTRUCTORS, EXAMINERS AND ASSESSORS",
+  "EAA F-075 CHECKLIST FOR INSTRUCTORS, EXAMINERS AND ASSESSORS RECORDS",
+  "EAA F-076 EXPERIENCE RECORDING FORM"
+];
+
+// Global pool of form numbers the admin can attach, always starts with N/A + master list
+let formNumbers = ["N/A", ...EAA_FORM_LIST];
+function secId(sectionKey){ return sectionKey.replace(/[^a-zA-Z0-9]/g,'_'); }
+
+function editName(k){
+  if(!k) return;
+  if(!canEdit(candidateOwnership[k])) return;
+  const current = getName(k);
+  showPrompt('Edit candidate name', current, (updated)=>{
+    if(updated === false) return; // cancelled
+    const trimmed = String(updated).trim();
+    if(trimmed.length === 0) return;
+    displayNames[k] = trimmed;
+    markDirty();
+    renderAddRow();
+    renderGrid();
+    if(currentModalKey === k){
+      document.getElementById('modalName').textContent = trimmed;
+    }
+  }, { confirmText: 'Save name' });
+}
+
+let activeCategory = CATEGORIES[0].key;
+
+// Candidates currently added to each category's list (starts empty; built via the dropdown)
+const selectedByCategory = {};
+CATEGORIES.forEach(c => selectedByCategory[c.key] = []);
+
+// Tracks who created each candidate ('admin' | 'user'). Candidates with no
+// entry here (e.g. the original 8 from the Excel import) are treated as
+// pre-existing content, which a "user" account is allowed to view but not
+// edit or remove \u2014 only content a user account itself added can be
+// changed by that account. Admins can always edit/remove anything.
+const candidateOwnership = {};
+
+function canEdit(ownerRole){
+  // ownerRole is undefined/'admin' for pre-existing content, or 'user' for
+  // something a user account added themselves.
+  return isAdmin() || (currentRole === 'user' && ownerRole === 'user');
+}
+
+// ===== Save / persist across reloads =====
+// Everything (records, checkboxes, form numbers, attached files, candidate
+// lists, and login credentials) is written to this browser's local storage
+// so it's still here next time this page is opened on this same device.
+// It does NOT sync between different computers/browsers \u2014 that would need
+// a real server. If local storage is unavailable or full (e.g. too many
+// large attached PDFs/photos), Save will show an error instead of silently
+// losing data.
+const STORAGE_KEY = 'eauQualPortal_v1';
+let hasUnsavedChanges = false;
+
+function markDirty(){
+  hasUnsavedChanges = true;
+  updateSaveStatus();
+}
+
+function updateSaveStatus(msg){
+  const el = document.getElementById('saveStatus');
+  if(!el) return;
+  if(msg){ el.textContent = msg; return; }
+  el.textContent = hasUnsavedChanges ? 'Unsaved changes' : 'All changes saved';
+  el.style.color = hasUnsavedChanges ? '#ffd479' : 'rgba(255,255,255,.85)';
+}
+
+function applyLoadedPayload(saved){
+  if(saved.DATA){
+    Object.keys(DATA).forEach(k=>delete DATA[k]);
+    Object.assign(DATA, saved.DATA);
+  }
+  if(saved.displayNames){
+    Object.keys(displayNames).forEach(k=>delete displayNames[k]);
+    Object.assign(displayNames, saved.displayNames);
+  }
+  if(saved.formNumbers && saved.formNumbers.length){
+    formNumbers = saved.formNumbers;
+  }
+  if(saved.selectedByCategory){
+    Object.keys(selectedByCategory).forEach(k=>delete selectedByCategory[k]);
+    Object.assign(selectedByCategory, saved.selectedByCategory);
+  }
+  if(saved.candidateOwnership){
+    Object.keys(candidateOwnership).forEach(k=>delete candidateOwnership[k]);
+    Object.assign(candidateOwnership, saved.candidateOwnership);
+  }
+  if(saved.credentials){
+    credentials.username = saved.credentials.username;
+    credentials.passwordHash = saved.credentials.passwordHash;
+  }
+  if(saved.howToFillGuides && saved.howToFillGuides.length){
+    howToFillGuides = saved.howToFillGuides;
+  }
+  if(saved.userAccounts){
+    userAccounts = saved.userAccounts;
+  }
+}
+
+function saveLocalOnly(payload){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+async function saveAll(){
+  const payload = { DATA, displayNames, formNumbers, selectedByCategory, candidateOwnership, credentials, howToFillGuides, userAccounts };
+
+  if(supabaseClient){
+    try{
+      const { error } = await supabaseClient
+        .from('portal_state')
+        .update({ data: payload, updated_at: new Date().toISOString() })
+        .eq('id', 'main');
+      if(error) throw error;
+      hasUnsavedChanges = false;
+      updateSaveStatus('Saved to cloud \u2713 \u2014 visible to everyone');
+      setTimeout(()=>updateSaveStatus(), 3500);
+      saveLocalOnly(payload); // keep a local backup copy too
+      return;
+    }catch(e){
+      console.error('Cloud save failed:', e);
+      const savedLocally = saveLocalOnly(payload);
+      showPrompt(savedLocally ? 'Saved locally only' : 'Could not save', null, null, {
+        isConfirm:true, confirmText:'OK',
+        message: savedLocally
+          ? 'Could not reach the cloud database, so this was saved only in this browser for now. Check your Supabase setup / internet connection, then Save again to sync it everywhere.'
+          : 'Saving failed both to the cloud and to this browser\u2019s local storage. Check your internet connection and Supabase configuration.'
+      });
+      if(savedLocally){
+        hasUnsavedChanges = false;
+        updateSaveStatus('Saved locally only (not synced)');
+      }
+      return;
+    }
+  }
+
+  // No cloud configured \u2014 same behaviour as before (local-only save)
+  const savedLocally = saveLocalOnly(payload);
+  if(savedLocally){
+    hasUnsavedChanges = false;
+    updateSaveStatus('Saved just now \u2713');
+    setTimeout(()=>updateSaveStatus(), 3000);
+  } else {
+    showPrompt('Could not save', null, null, {
+      isConfirm:true, confirmText:'OK',
+      message:'Saving failed \u2014 this usually means the browser\u2019s local storage is full. Large attached PDFs/photos take up the most space; try removing a few attachments and saving again.'
+    });
+  }
+}
+
+async function loadAll(){
+  if(supabaseClient){
+    try{
+      const { data, error } = await supabaseClient
+        .from('portal_state')
+        .select('data')
+        .eq('id', 'main')
+        .single();
+      if(error) throw error;
+      if(data && data.data && Object.keys(data.data).length){
+        applyLoadedPayload(data.data);
+        return true;
+      }
+      return false; // cloud row exists but is empty (first-ever run)
+    }catch(e){
+      console.error('Cloud load failed, falling back to this browser\u2019s local save:', e);
+      // fall through to local
+    }
+  }
+
+  let saved = null;
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) saved = JSON.parse(raw);
+  }catch(e){ saved = null; }
+  if(!saved) return false;
+  applyLoadedPayload(saved);
+  return true;
+}
+
+(async function initAuth(){
+  const restored = await loadAll();
+  if(!credentials.passwordHash){
+    credentials.passwordHash = await hashText('A350-1000');
+  }
+  if(!userCredentials.passwordHash){
+    userCredentials.passwordHash = await hashText('12345678');
+  }
+  if(restored){
+    // cloud/local data may have arrived after the page's first render below
+    renderRibbon();
+    renderAddRow();
+    renderGrid();
+  }
+  updateSaveStatus(supabaseClient ? 'Connected to cloud' : '');
+  setTimeout(()=>updateSaveStatus(), 3000);
+})();
+window.addEventListener('beforeunload', (e)=>{
+  if(hasUnsavedChanges){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+// ===== Form submissions / notifications =====
+// Submissions come from the on-page "Fill a Form" flow (EAA_F076 / EAA_F033
+// today). Each one is stored in Supabase if configured, otherwise in this
+// browser's local storage as a fallback. This panel reads both, shows a
+// badge of how many are unread, and can generate a downloadable Word (.doc)
+// document for each one, laid out like the original EAA form.
+
+async function fetchSubmissions(){
+  let cloudRows = [];
+  if(supabaseClient){
+    try{
+      const { data, error } = await supabaseClient
+        .from('form_submissions')
+        .select('*')
+        .order('submitted_at', { ascending:false });
+      if(error) throw error;
+      cloudRows = data || [];
+    }catch(e){
+      console.error('Could not load form submissions from the cloud:', e);
+    }
+  }
+  const localRows = readLocalSubmissions();
+  return [...cloudRows, ...localRows].sort((a,b)=> new Date(b.submitted_at) - new Date(a.submitted_at));
+}
+
+async function refreshNotifBadge(){
+  const badge = document.getElementById('notifBadge');
+  if(!badge) return;
+  const rows = await fetchSubmissions();
+  const unread = rows.filter(r=>!r.is_read).length;
+  const pendingAccounts = isAdmin() ? userAccounts.filter(a=>!a.approved).length : 0;
+  const total = unread + pendingAccounts;
+  if(total > 0){
+    badge.textContent = total > 99 ? '99+' : String(total);
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function fmtSubmittedAt(iso){
+  try{
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  }catch(e){ return iso; }
+}
+
+async function openNotifications(){
+  const overlay = document.getElementById('notifOverlay');
+  const body = document.getElementById('notifBody');
+  overlay.classList.add('open');
+
+  body.innerHTML = `<div class="report-empty">Loading\u2026</div>`;
+  const rows = await fetchSubmissions();
+
+  let accountsHtml = '';
+  if(isAdmin()){
+    const pending = userAccounts.filter(a=>!a.approved);
+    accountsHtml = `
+      <div class="notif-section-title">&#128100; Pending Account Requests ${pending.length ? `<span class="badge partial">${pending.length}</span>` : ''}</div>
+      ${pending.length === 0
+        ? `<p class="empty-note" style="margin-bottom:18px;">No pending account requests.</p>`
+        : `<div class="notif-list" style="margin-bottom:22px;">${pending.map(a => `
+            <div class="notif-item unread">
+              <div class="notif-item-top">
+                <span class="notif-time">Requested ${fmtSubmittedAt(a.requestedAt)}</span>
+                <span class="badge partial">New</span>
+              </div>
+              <div class="notif-preview"><b>Username:</b> ${a.username}</div>
+              <div class="notif-actions">
+                <button class="notif-download" type="button" onclick="approveAccount('${a.username}')">&#9989; Approve</button>
+                <button class="notif-delete" type="button" onclick="rejectAccount('${a.username}')">&#10060; Reject</button>
+              </div>
+            </div>
+          `).join('')}</div>`}
+      <div class="notif-section-title">&#128276; Form Submissions</div>
+    `;
+  }
+
+  if(rows.length === 0){
+    body.innerHTML = accountsHtml + `<div class="report-empty">No form submissions yet.</div>`;
+    return;
+  }
+
+  body.innerHTML = accountsHtml + `<div class="notif-list">${rows.map(r => {
+    const answers = r.answers || {};
+    const formLabel = answers.__formLabel || 'Form Submission';
+    const entries = Object.keys(answers).filter(k=>!k.startsWith('__'));
+    const previewEntries = entries.slice(0, 3);
+    return `
+      <div class="notif-item ${r.is_read ? '' : 'unread'}">
+        <div class="notif-item-top">
+          <span class="notif-time">${fmtSubmittedAt(r.submitted_at)} &middot; <strong>${formLabel}</strong></span>
+          ${!r.is_read ? `<span class="badge partial">New</span>` : ''}
+        </div>
+        <div class="notif-preview">
+          ${previewEntries.map(q => `<div><b>${q}:</b> ${String(answers[q]||'').slice(0,80) || '&mdash;'}</div>`).join('')}
+          ${entries.length > 3 ? `<div style="opacity:.65;">+ ${entries.length-3} more field${entries.length-3===1?'':'s'}</div>` : ''}
+        </div>
+        <div class="notif-actions">
+          <button class="notif-download" type="button" onclick="downloadSubmissionWord('${r.id}')">&#128190; Download Word</button>
+          ${!r.is_read ? `<button class="notif-read" type="button" onclick="markSubmissionRead('${r.id}')">&#10003; Mark as read</button>` : ''}
+          <button class="notif-delete" type="button" onclick="deleteSubmission('${r.id}')">&#128465; Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('')}</div>`;
+}
+function closeNotifications(){
+  document.getElementById('notifOverlay').classList.remove('open');
+}
+document.getElementById('notifOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='notifOverlay') closeNotifications();
+});
+
+async function approveAccount(username){
+  if(!isAdmin()) return; // account approval is an admin-only action
+  const account = userAccounts.find(a => a.username === username);
+  if(!account) return;
+  account.approved = true;
+  markDirty();
+  await saveAll();
+  openNotifications();
+  refreshNotifBadge();
+}
+
+async function rejectAccount(username){
+  if(!isAdmin()) return; // account approval/rejection is an admin-only action
+  showPrompt('Reject this account request?', null, async ()=>{
+    userAccounts = userAccounts.filter(a => a.username !== username);
+    markDirty();
+    await saveAll();
+    openNotifications();
+    refreshNotifBadge();
+  }, { isConfirm:true, confirmText:'Reject', message:`The request for username "${username}" will be permanently removed.` });
+}
+
+function isLocalSubmissionId(id){
+  return typeof id === 'string' && id.startsWith('local_');
+}
+
+async function markSubmissionRead(id){
+  if(currentRole !== 'admin' && currentRole !== 'user') return;
+  if(isLocalSubmissionId(id)){
+    const local = readLocalSubmissions();
+    const rec = local.find(r=>r.id === id);
+    if(rec) rec.is_read = true;
+    writeLocalSubmissions(local);
+  } else if(supabaseClient){
+    try{
+      await supabaseClient.from('form_submissions').update({ is_read:true }).eq('id', isNaN(id) ? id : Number(id));
+    }catch(e){ console.error(e); }
+  }
+  openNotifications();
+  refreshNotifBadge();
+}
+
+async function deleteSubmission(id){
+  if(currentRole !== 'admin' && currentRole !== 'user') return;
+  showPrompt('Delete this submission?', null, async ()=>{
+    if(isLocalSubmissionId(id)){
+      writeLocalSubmissions(readLocalSubmissions().filter(r=>r.id !== id));
+    } else if(supabaseClient){
+      try{
+        await supabaseClient.from('form_submissions').delete().eq('id', isNaN(id) ? id : Number(id));
+      }catch(e){ console.error(e); }
+    }
+    openNotifications();
+    refreshNotifBadge();
+  }, { isConfirm:true, confirmText:'Delete', message:'This permanently removes the submission and its record.' });
+}
+
+// ----- Building a Word (.doc) document for a submission -----
+
+function ffEsc(v){
+  if(v===undefined || v===null || v==='') return '&nbsp;';
+  return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function wordDocWrapper(bodyHtml, title){
+  return `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset="utf-8"><title>${ffEsc(title)}</title>
+<style>
+  body{ font-family:Calibri, Arial, sans-serif; font-size:11pt; }
+  table{ border-collapse:collapse; width:100%; margin-bottom:16px; }
+  td, th{ border:1px solid #000; padding:6px 8px; font-size:10.5pt; vertical-align:top; }
+  th{ background:#eeeeee; text-align:left; }
+  .hcell{ text-align:center; font-weight:bold; }
+  h2{ font-size:12pt; text-transform:uppercase; border-bottom:1px solid #000; padding-bottom:3px; margin-top:22px; }
+</style></head>
+<body>${bodyHtml}</body></html>`;
+}
+
+function wordLetterhead(def, submittedDate){
+  return `
+    <table>
+      <tr>
+        <td class="hcell" style="width:18%;">Ethiopian<br>Aviation Academy</td>
+        <td class="hcell" style="width:57%;">ETHIOPIAN AIRLINES AVIATION ACADEMY<br>MAINTENANCE TRAINING ORGANIZATION<br>EXPOSITION FORMS</td>
+        <td class="hcell" style="width:25%;">${ffEsc(def.revision)}</td>
+      </tr>
+      <tr>
+        <td class="hcell" colspan="2">${ffEsc(def.title)}</td>
+        <td class="hcell">${ffEsc(def.date)}</td>
+      </tr>
+    </table>
+    <p style="font-size:9pt;color:#555;">Submitted: ${ffEsc(submittedDate)}</p>
+  `;
+}
+
+function ffCollectItemNumbers(answers, regex){
+  const nums = new Set();
+  Object.keys(answers).forEach(k=>{
+    const m = k.match(regex);
+    if(m) nums.add(parseInt(m[1], 10));
+  });
+  return [...nums].sort((a,b)=>a-b);
+}
+
+function buildF076WordHtml(answers, submittedDate){
+  const def = FORM_DEFS.EAA_F076;
+  const itemNums = ffCollectItemNumbers(answers, /^Item (\d+) - Details$/);
+  let rows = '';
+  itemNums.forEach(i=>{
+    rows += `<tr>
+      <td style="text-align:center;">${i}</td>
+      <td>${ffEsc(answers['Item '+i+' - Details'])}</td>
+      <td>${ffEsc(answers['Item '+i+' - Period'])}</td>
+      <td>${ffEsc(answers['Item '+i+' - Total Hrs'])}</td>
+    </tr>`;
+  });
+  const body = `
+    ${wordLetterhead(def, submittedDate)}
+    <h2>General Information</h2>
+    <table>
+      <tr><td style="width:45%;">Name</td><td>${ffEsc(answers['Name'])}</td></tr>
+      <tr><td>Position within the organization</td><td>${ffEsc(answers['Position within the organization'])}</td></tr>
+      <tr><td>Date of joining Ethiopian Airlines</td><td>${ffEsc(answers['Date of joining Ethiopian Airlines'])}</td></tr>
+      <tr><td>Staff ID number</td><td>${ffEsc(answers['Staff ID number'])}</td></tr>
+      <tr><td>Issue date of the COR</td><td>${ffEsc(answers['Issue date of the COR'])}</td></tr>
+    </table>
+    <h2>Experience Summary relevant to (Aircraft / Engine combination)</h2>
+    <table><tr><td>${ffEsc(answers['Experience relevant to (Aircraft / Engine combination)'])}</td></tr></table>
+    <h2>Experience Details</h2>
+    <table>
+      <tr><th>Item</th><th>Details</th><th>Period</th><th>Total Hrs.</th></tr>
+      ${rows}
+      <tr><td colspan="3" style="text-align:right;font-weight:bold;">Total</td><td>${ffEsc(answers['Total Hrs (overall)'])}</td></tr>
+    </table>
+    <h2>Sign-off</h2>
+    <table>
+      <tr><td style="width:45%;">Completed by</td><td>${ffEsc(answers['Completed by'])}</td></tr>
+      <tr><td>Date</td><td>${ffEsc(answers['Completed - Date'])}</td></tr>
+      <tr><td>Approved by (Training Manager)</td><td>${ffEsc(answers['Approved by (Training Manager)'])}</td></tr>
+      <tr><td>Date</td><td>${ffEsc(answers['Approved - Date'])}</td></tr>
+    </table>
+  `;
+  return wordDocWrapper(body, def.formNo);
+}
+
+function buildF033WordHtml(answers, submittedDate){
+  const def = FORM_DEFS.EAA_F033;
+  function detailsTable(title, prefix){
+    const regex = new RegExp('^' + prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' (\\d+)$');
+    const itemNums = ffCollectItemNumbers(answers, regex);
+    let rows = '';
+    itemNums.forEach(i=>{
+      rows += `<tr><td style="text-align:center;width:8%;">${i}</td><td>${ffEsc(answers[prefix+' '+i])}</td></tr>`;
+    });
+    return `<h2>${ffEsc(title)}</h2><table><tr><th>Item</th><th>Details</th></tr>${rows}</table>`;
+  }
+  const body = `
+    ${wordLetterhead(def, submittedDate)}
+    <h2>General Information</h2>
+    <table>
+      <tr><td style="width:45%;">Name</td><td>${ffEsc(answers['Name'])}</td></tr>
+      <tr><td>Position within the organisation</td><td>${ffEsc(answers['Position within the organisation'])}</td></tr>
+      <tr><td>Date of joining Ethiopian Airlines</td><td>${ffEsc(answers['Date of joining Ethiopian Airlines'])}</td></tr>
+      <tr><td>Staff ID number</td><td>${ffEsc(answers['Staff ID number'])}</td></tr>
+    </table>
+    ${detailsTable('Qualification Relevant to the Position','Qualification')}
+    ${detailsTable('Experience Relevant to the Position','Experience')}
+    ${detailsTable('Technical Qualification Aircraft','Technical Qualification')}
+    ${detailsTable('Professional Qualification','Professional Qualification')}
+    ${detailsTable('Leadership Qualification','Leadership Qualification')}
+    <h2>Sign-off</h2>
+    <table>
+      <tr><td style="width:45%;">Approved By (Training Manager)</td><td>${ffEsc(answers['Approved By (Training Manager)'])}</td></tr>
+      <tr><td>Date</td><td>${ffEsc(answers['Approved - Date'])}</td></tr>
+    </table>
+  `;
+  return wordDocWrapper(body, def.formNo);
+}
+
+function buildGenericWordHtml(answers, submittedDate, label){
+  const entries = Object.keys(answers).filter(k=>!k.startsWith('__'));
+  const rows = entries.map(k=>`<tr><td style="width:45%;">${ffEsc(k)}</td><td>${ffEsc(answers[k])}</td></tr>`).join('');
+  const body = `
+    <h2>${ffEsc(label)}</h2>
+    <p style="font-size:9pt;color:#555;">Submitted: ${ffEsc(submittedDate)}</p>
+    <table>${rows}</table>
+  `;
+  return wordDocWrapper(body, label);
+}
+
+function buildSubmissionWordHtml(row){
+  const answers = row.answers || {};
+  const formKey = answers.__formKey;
+  const submittedDate = fmtSubmittedAt(row.submitted_at);
+  if(formKey === 'EAA_F076') return buildF076WordHtml(answers, submittedDate);
+  if(formKey === 'EAA_F033') return buildF033WordHtml(answers, submittedDate);
+  return buildGenericWordHtml(answers, submittedDate, answers.__formLabel || PDF_FORM_TITLE);
+}
+
+function downloadWordDoc(filename, htmlContent){
+  const blob = new Blob(['\ufeff', htmlContent], { type:'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
+async function downloadSubmissionWord(id){
+  const rows = await fetchSubmissions();
+  const row = rows.find(r => String(r.id) === String(id));
+  if(!row){
+    showPrompt('Not found', null, null, { isConfirm:true, confirmText:'OK', message:'Could not find this submission (it may have just been deleted).' });
+    return;
+  }
+  const html = buildSubmissionWordHtml(row);
+  const formKey = (row.answers && row.answers.__formKey) || 'Form';
+  const dateStr = (row.submitted_at || '').slice(0,10) || 'submission';
+  downloadWordDoc(`EAU-${formKey}-${dateStr}.doc`, html);
+}
+
+// Refresh the notification badge periodically while the admin is signed in
+setInterval(()=>{
+  if(document.getElementById('appContent').style.display !== 'none'){
+    refreshNotifBadge();
+  }
+}, 60000);
+
+function renderRibbon(){
+  const el = document.getElementById('ribbonInner');
+  el.innerHTML = CATEGORIES.map(c => `
+    <button class="ribbon-btn ${c.key===activeCategory?'active':''}" data-key="${c.key}">
+      <span class="dot"></span>${c.label}
+    </button>
+  `).join('');
+  el.querySelectorAll('.ribbon-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activeCategory = btn.dataset.key;
+      renderRibbon();
+      renderAddRow();
+      renderGrid();
+    });
+  });
+}
+
+function renderAddRow(){
+  const cat = CATEGORIES.find(c=>c.key===activeCategory);
+  const already = selectedByCategory[cat.key];
+  const remaining = Object.keys(DATA).filter(k=>!already.includes(k));
+  const el = document.getElementById('addRow');
+
+  const newCandidateBtn = `<button class="add-btn" type="button" style="background:var(--eau-gold);color:#5a4300;" onclick="createNewCandidate()">+ New candidate</button>`;
+
+  if(remaining.length===0){
+    el.innerHTML = `<p class="add-hint">&#9989; All existing candidates have been added to the ${cat.label} list.</p>${newCandidateBtn}`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="add-label">Add candidate to ${cat.label} list:</span>
+    <select id="candidateSelect">
+      ${remaining.map(k=>`<option value="${k}">${getName(k)}</option>`).join('')}
+    </select>
+    <button class="add-btn" type="button" onclick="addCandidate()">+ Add to list</button>
+    ${newCandidateBtn}
+  `;
+}
+
+function slugify(name){
+  let base = name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'.').replace(/^\.+|\.+$/g,'');
+  if(!base) base = 'candidate';
+  let key = base, n = 1;
+  while(DATA[key]){ key = base + '.' + (++n); }
+  return key;
+}
+
+function createNewCandidate(){
+  showPrompt('New candidate\u2019s full name', '', (name)=>{
+    const trimmed = String(name).trim();
+    if(!trimmed) return;
+    const key = slugify(trimmed);
+    DATA[key] = {};
+    CATEGORIES.forEach(c => DATA[key][c.key] = []);
+    displayNames[key] = trimmed;
+    candidateOwnership[key] = currentRole; // remember who created this candidate
+    // add them straight into the currently active category's visible list
+    const cat = CATEGORIES.find(c=>c.key===activeCategory);
+    selectedByCategory[cat.key].push(key);
+    markDirty();
+    renderAddRow();
+    renderGrid();
+  }, { confirmText:'Create candidate' });
+}
+
+function addCandidate(){
+  const sel = document.getElementById('candidateSelect');
+  if(!sel || !sel.value) return;
+  const cat = CATEGORIES.find(c=>c.key===activeCategory);
+  if(!selectedByCategory[cat.key].includes(sel.value)){
+    selectedByCategory[cat.key].push(sel.value);
+  }
+  markDirty();
+  renderAddRow();
+  renderGrid();
+}
+
+function removeCandidate(k, evt){
+  if(evt) evt.stopPropagation();
+  // Removing from a category's visible list doesn't delete the candidate's
+  // actual data, so both roles can do this (it's reversible via "+ Add to list").
+  const cat = CATEGORIES.find(c=>c.key===activeCategory);
+  selectedByCategory[cat.key] = selectedByCategory[cat.key].filter(x=>x!==k);
+  markDirty();
+  renderAddRow();
+  renderGrid();
+}
+
+function renderGrid(){
+  const cat = CATEGORIES.find(c=>c.key===activeCategory);
+  document.getElementById('sectionTitle').textContent = cat.label;
+  document.getElementById('sectionDesc').textContent = cat.desc;
+  document.getElementById('reportOpenBtn').textContent = '\u{1F4CB} Remaining Training Report \u2014 ' + cat.label;
+
+  const grid = document.getElementById('cardGrid');
+  const candidateKeys = selectedByCategory[cat.key];
+
+  if(candidateKeys.length===0){
+    grid.innerHTML = `<div class="empty-grid">No candidates added yet. Use the dropdown above to add candidates to the <strong>${cat.label}</strong> list.</div>`;
+    return;
+  }
+
+  grid.innerHTML = candidateKeys.map(k=>{
+    const name = getName(k);
+    const items = DATA[k][cat.key] || [];
+    const total = items.length;
+    const done = items.filter(i=>i.checked).length;
+    let badgeClass = 'none', badgeText = 'No records';
+    if(total>0){
+      if(done===total){ badgeClass='ok'; badgeText='Fully qualified'; }
+      else if(done>0){ badgeClass='partial'; badgeText='In progress'; }
+      else { badgeClass='partial'; badgeText='Not started'; }
+    }
+    return `
+      <div class="card" onclick="openModal('${k}')">
+        <div class="card-actions">
+          ${canEdit(candidateOwnership[k]) ? `<button class="edit-btn" type="button" onclick="editName('${k}', event); event.stopPropagation();" title="Edit name">&#9998;</button>` : ''}
+          <button class="remove-btn" type="button" onclick="removeCandidate('${k}', event)" title="Remove from list">&times;</button>
+        </div>
+        <div class="card-top">
+          <div class="avatar">${initials(name)}</div>
+          <div>
+            <div class="card-name-row">
+              <div class="card-name">${name}</div>
+              <button class="course-report-btn" type="button" onclick="openCourseReport('${k}'); event.stopPropagation();">&#128203; Remaining Course Report</button>
+            </div>
+            <div class="card-sheet">Candidate record</div>
+          </div>
+        </div>
+        <div class="status-row">
+          <span class="badge ${badgeClass}">${badgeText}</span>
+          <span class="progress-mini">${total ? done+'/'+total+' items' : '—'}</span>
+        </div>
+        ${badgeClass==='partial' ? `<button class="remaining-btn" type="button" onclick="showRemaining('${k}','${cat.key}'); event.stopPropagation();">&#9203; View Remaining Training (${total-done})</button>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function formOptions(current){
+  const val = current || 'N/A';
+  const opts = formNumbers.map(f => `<option value="${f.replace(/"/g,'&quot;')}" ${f===val?'selected':''}>${f}</option>`);
+  opts.push(`<option value="__add__">+ Add other form no.</option>`);
+  return opts.join('');
+}
+
+function sectionBlock(title, items, candidateKey, sectionKey){
+  const sid = secId(sectionKey);
+  const listHtml = (!items || items.length===0)
+    ? `<p class="empty-note">No records on file for this section.</p>`
+    : `<ul class="qual-list">${items.map((i, idx) => {
+        const form = i.form || 'N/A';
+        const fileId = `file-${sid}-${idx}`;
+        const att = i.attachment;
+        const editableRow = canEdit(i.addedBy); // pre-existing items: addedBy is undefined -> locked for 'user'
+        const canDeleteThisFile = att && (isAdmin() || (currentRole === 'user' && att.addedBy === 'user'));
+        const pKey = pendingKey(sectionKey, idx);
+        const isPending = pendingChecksCandidate === candidateKey && pendingChecks.hasOwnProperty(pKey);
+        const effectiveChecked = isPending ? pendingChecks[pKey] : i.checked;
+        return `
+        <li class="${isPending ? 'pending-change' : ''}">
+          <div class="record-row-top">
+            <label class="check-wrap">
+              <input type="checkbox" ${effectiveChecked?'checked':''} ${editableRow?'':'disabled'}
+                onchange="toggleItem('${candidateKey}','${sectionKey}',${idx})">
+              <span class="item-text">${i.item}</span>
+            </label>
+            ${isPending ? `<span class="pending-dot" title="Unsaved change">&#9679;</span>` : ''}
+            ${editableRow ? `<button class="record-remove" type="button" title="Remove record"
+              onclick="removeRecord('${candidateKey}','${sectionKey}',${idx})">&times;</button>` : ''}
+          </div>
+          <div class="record-row-bottom">
+            <select class="form-select" ${editableRow?'':'disabled'} onchange="setForm('${candidateKey}','${sectionKey}',${idx},this)">
+              ${formOptions(form)}
+            </select>
+            ${form && form !== 'N/A' ? `<span class="form-tag">&#128206; ${form}</span>` : ''}
+          </div>
+          <div class="record-row-files">
+            <input type="file" id="${fileId}" accept="application/pdf,image/*" style="display:none"
+              onchange="handleFileAttach('${candidateKey}','${sectionKey}',${idx}, this)">
+            <button class="attach-btn" type="button" onclick="document.getElementById('${fileId}').click()">&#128206; Add File</button>
+            ${att ? `
+              <span class="file-chip">
+                ${att.type && att.type.startsWith('image/') ? `<img src="${att.url || att.dataUrl}" alt="">` : `<span class="file-chip-icon">&#128196;</span>`}
+                <a href="${att.url || att.dataUrl}" target="_blank" rel="noopener" title="${att.name}">${att.name.length>22 ? att.name.slice(0,19)+'\u2026' : att.name}</a>
+                ${!att.url ? `<span title="Only saved in this browser \u2014 not synced to the cloud" style="font-size:10px;">&#9888;</span>` : ''}
+                ${canDeleteThisFile ? `<button class="file-delete" type="button" title="Delete file"
+                  onclick="removeAttachment('${candidateKey}','${sectionKey}',${idx})">&times;</button>` : ''}
+              </span>` : ''}
+          </div>
+        </li>`;
+      }).join('')}</ul>`;
+
+  return `<div class="qual-section">
+      <h4>${title}</h4>
+      ${listHtml}
+      <div class="add-record-row">
+        <input type="text" id="new-item-${sid}" placeholder="Add a qualification record...">
+        <button type="button" onclick="addRecord('${candidateKey}','${sectionKey}','new-item-${sid}')">+ Add record</button>
+      </div>
+    </div>`;
+}
+
+let currentModalKey = null;
+
+let pendingChecks = {};          // key: "sectionKey::idx" -> staged new checked value (not yet saved)
+let pendingChecksCandidate = null;
+
+function pendingKey(sectionKey, idx){ return sectionKey + '::' + idx; }
+
+function openModal(k){
+  currentModalKey = k;
+  if(pendingChecksCandidate !== k){
+    // switching to a different candidate (or opening fresh) - clear any stale draft
+    pendingChecks = {};
+    pendingChecksCandidate = k;
+  }
+  const name = getName(k);
+  document.getElementById('modalName').textContent = name;
+  document.getElementById('modalRole').textContent = 'Full record (tap a box to mark complete/incomplete)';
+
+  const sections = DATA[k];
+  let html = '';
+  CATEGORIES.forEach(c=>{
+    html += sectionBlock(c.key, sections[c.key], k, c.key);
+  });
+
+  const hasPending = Object.keys(pendingChecks).length > 0;
+  if(hasPending){
+    html += `
+      <div class="checklist-save-bar">
+        <span class="checklist-save-note">You have unsaved checkbox changes for this candidate.</span>
+        <div class="checklist-save-actions">
+          <button type="button" class="checklist-cancel-btn" onclick="discardChecklistChanges('${k}')">Cancel</button>
+          <button type="button" class="checklist-save-btn" onclick="commitChecklistChanges('${k}')">&#128190; Save</button>
+        </div>
+      </div>
+    `;
+  }
+
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('overlay').classList.add('open');
+}
+
+function toggleItem(candidateKey, sectionKey, idx){
+  const item = DATA[candidateKey] && DATA[candidateKey][sectionKey] && DATA[candidateKey][sectionKey][idx];
+  if(!item || !canEdit(item.addedBy)) return;
+  const key = pendingKey(sectionKey, idx);
+  const currentEffective = pendingChecks.hasOwnProperty(key) ? pendingChecks[key] : item.checked;
+  pendingChecks[key] = !currentEffective;
+  pendingChecksCandidate = candidateKey;
+  // refresh just the open modal to show the staged toggle; the card grid
+  // (badges/progress) intentionally stays showing the last SAVED state
+  // until the admin/user explicitly clicks Save.
+  if(currentModalKey === candidateKey){
+    openModal(candidateKey);
+  }
+}
+
+async function commitChecklistChanges(candidateKey){
+  Object.keys(pendingChecks).forEach(key=>{
+    const [sectionKey, idxStr] = key.split('::');
+    const idx = Number(idxStr);
+    const item = DATA[candidateKey] && DATA[candidateKey][sectionKey] && DATA[candidateKey][sectionKey][idx];
+    if(item && canEdit(item.addedBy)){
+      item.checked = pendingChecks[key];
+    }
+  });
+  pendingChecks = {};
+  markDirty();
+  await saveAll();
+  if(currentModalKey === candidateKey){
+    openModal(candidateKey);
+  }
+  renderGrid();
+}
+
+function discardChecklistChanges(candidateKey){
+  pendingChecks = {};
+  if(currentModalKey === candidateKey){
+    openModal(candidateKey);
+  }
+}
+
+function addRecord(candidateKey, sectionKey, inputId){
+  if(currentRole !== 'admin' && currentRole !== 'user') return; // adding new content is open to both roles
+  const input = document.getElementById(inputId);
+  if(!input) return;
+  const text = input.value.trim();
+  if(!text) return;
+  DATA[candidateKey][sectionKey].push({ item: text, checked: false, form: 'N/A', addedBy: currentRole });
+  markDirty();
+  if(currentModalKey === candidateKey){
+    openModal(candidateKey);
+  }
+  renderGrid();
+}
+
+function removeRecord(candidateKey, sectionKey, idx){
+  const item = DATA[candidateKey] && DATA[candidateKey][sectionKey] && DATA[candidateKey][sectionKey][idx];
+  if(!item || !canEdit(item.addedBy)) return;
+  showPrompt('Remove this qualification record?', null, ()=>{
+    DATA[candidateKey][sectionKey].splice(idx, 1);
+    markDirty();
+    if(currentModalKey === candidateKey){
+      openModal(candidateKey);
+    }
+    renderGrid();
+  }, { isConfirm:true, confirmText:'Remove', message:'This record will be deleted from this candidate\u2019s list.' });
+}
+
+const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8 MB cap for in-memory attachments
+
+async function handleFileAttach(candidateKey, sectionKey, idx, inputEl){
+  if(currentRole !== 'admin' && currentRole !== 'user') return; // must be signed in as one of the two roles
+  const file = inputEl.files && inputEl.files[0];
+  if(!file) return;
+  const isPdf = file.type === 'application/pdf';
+  const isImage = file.type.startsWith('image/');
+  if(!isPdf && !isImage){
+    showPrompt('Unsupported file type', null, null, {
+      isConfirm:true, confirmText:'OK',
+      message:'Please choose a PDF document or a photo (JPG, PNG, etc).'
+    });
+    inputEl.value = '';
+    return;
+  }
+  if(file.size > MAX_FILE_BYTES){
+    showPrompt('File too large', null, null, {
+      isConfirm:true, confirmText:'OK',
+      message:'Please choose a file under 8 MB.'
+    });
+    inputEl.value = '';
+    return;
+  }
+
+  if(supabaseClient){
+    try{
+      const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
+      const path = `${candidateKey}/${secId(sectionKey)}/${Date.now()}_${safeName}`;
+      const { error: upErr } = await supabaseClient.storage.from('attachments').upload(path, file, { upsert:true });
+      if(upErr) throw upErr;
+      const { data: pub } = supabaseClient.storage.from('attachments').getPublicUrl(path);
+      DATA[candidateKey][sectionKey][idx].attachment = {
+        name: file.name, url: pub.publicUrl, type: file.type, addedBy: currentRole
+      };
+      markDirty();
+      if(currentModalKey === candidateKey) openModal(candidateKey);
+      renderGrid();
+      return;
+    }catch(e){
+      console.error('Cloud file upload failed, falling back to local-only attachment:', e);
+      showPrompt('Cloud upload failed', null, null, {
+        isConfirm:true, confirmText:'OK',
+        message:'Could not upload to cloud storage, so this file will only be visible in this browser for now. Check your Supabase storage bucket/policy setup.'
+      });
+      // fall through to local embed below
+    }
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    DATA[candidateKey][sectionKey][idx].attachment = {
+      name: file.name, dataUrl: e.target.result, type: file.type, addedBy: currentRole
+    };
+    markDirty();
+    if(currentModalKey === candidateKey) openModal(candidateKey);
+    renderGrid();
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeAttachment(candidateKey, sectionKey, idx){
+  const att = DATA[candidateKey] && DATA[candidateKey][sectionKey] && DATA[candidateKey][sectionKey][idx]
+    ? DATA[candidateKey][sectionKey][idx].attachment : null;
+  const allowed = isAdmin() || (currentRole === 'user' && att && att.addedBy === 'user');
+  if(!allowed) return; // users can only remove files they themselves added, never pre-existing ones
+  showPrompt('Remove attached file?', null, ()=>{
+    delete DATA[candidateKey][sectionKey][idx].attachment;
+    markDirty();
+    if(currentModalKey === candidateKey) openModal(candidateKey);
+    renderGrid();
+  }, { isConfirm:true, confirmText:'Delete file', message:'This will remove the attached PDF/photo from this record.' });
+}
+
+function setForm(candidateKey, sectionKey, idx, selectEl){
+  const item = DATA[candidateKey] && DATA[candidateKey][sectionKey] && DATA[candidateKey][sectionKey][idx];
+  if(!item || !canEdit(item.addedBy)) return;
+  let value = selectEl.value;
+  if(value === '__add__'){
+    showPrompt('Enter a form number / name', '', (newNum)=>{
+      const trimmed = String(newNum).trim();
+      if(!trimmed){
+        if(currentModalKey === candidateKey) openModal(candidateKey);
+        return;
+      }
+      if(!formNumbers.includes(trimmed)) formNumbers.push(trimmed);
+      DATA[candidateKey][sectionKey][idx].form = trimmed;
+      markDirty();
+      if(currentModalKey === candidateKey){
+        openModal(candidateKey);
+      }
+    }, { confirmText:'Add form' });
+    return;
+  }
+  DATA[candidateKey][sectionKey][idx].form = value;
+  markDirty();
+  if(currentModalKey === candidateKey){
+    openModal(candidateKey);
+  }
+}
+function closeModal(){
+  document.getElementById('overlay').classList.remove('open');
+}
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id==='overlay') closeModal();
+});
+
+// ===== Remaining Training (single candidate, single category) =====
+function showRemaining(candidateKey, sectionKey){
+  const cat = CATEGORIES.find(c=>c.key===sectionKey);
+  const items = (DATA[candidateKey][sectionKey] || []).filter(i=>!i.checked);
+  document.getElementById('remainingTitle').textContent = getName(candidateKey);
+  document.getElementById('remainingSub').textContent = cat.label + ' \u2014 remaining items';
+
+  const body = document.getElementById('remainingBody');
+  if(items.length===0){
+    body.innerHTML = `<p class="empty-note">No remaining items \u2014 this category is fully complete.</p>`;
+  } else {
+    body.innerHTML = `<ul class="remaining-list">${items.map(i => `
+      <li><span class="dot2"></span>${i.item}${i.form && i.form!=='N/A' ? ` <span style="opacity:.7;">(${i.form})</span>` : ''}</li>
+    `).join('')}</ul>`;
+  }
+  document.getElementById('remainingOverlay').classList.add('open');
+}
+function closeRemaining(){
+  document.getElementById('remainingOverlay').classList.remove('open');
+}
+document.getElementById('remainingOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='remainingOverlay') closeRemaining();
+});
+
+// ===== Remaining Course Report (single candidate, ALL categories, editable duration) =====
+function openCourseReport(candidateKey){
+  const cat = CATEGORIES.find(c=>c.key===activeCategory);
+  document.getElementById('courseReportTitle').textContent = getName(candidateKey) + ' \u2014 Remaining Course Report (' + cat.label + ')';
+  renderCourseReportBody(candidateKey);
+  document.getElementById('courseReportOverlay').classList.add('open');
+}
+
+function renderCourseReportBody(candidateKey){
+  const body = document.getElementById('courseReportBody');
+
+  // Gather remaining (unchecked) items from ALL FOUR sub-categories
+  // (Continuation Training Record, Qualification Record, Initial Approval
+  // Requirements, Other Qualification) and report them together in one
+  // table, under the single category name currently selected on the main
+  // menu (e.g. everything shows as "Knowledge Instructor" if that's the
+  // active tab when this candidate's report is opened).
+  const rows = [];
+  CATEGORIES.forEach(cat=>{
+    const items = (DATA[candidateKey] && DATA[candidateKey][cat.key]) || [];
+    items.forEach((it, idx)=>{
+      if(!it.checked){
+        rows.push({ catKey: cat.key, idx, item: it });
+      }
+    });
+  });
+
+  if(rows.length === 0){
+    body.innerHTML = `<div class="report-empty">&#127881; No remaining courses \u2014 this candidate is fully qualified in every category.</div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="report-table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr><th>Course Name</th><th>Course Duration</th><th>Assigned Date</th></tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td>${r.item.item}</td>
+              <td>
+                <input type="text" class="course-duration-input"
+                  data-cat="${r.catKey}" data-idx="${r.idx}"
+                  value="${(r.item.duration || '').toString().replace(/"/g,'&quot;')}"
+                  placeholder="e.g. 3 days">
+              </td>
+              <td>
+                <input type="date" class="course-duration-input course-assigned-date-input"
+                  data-cat="${r.catKey}" data-idx="${r.idx}"
+                  value="${(r.item.assignedDate || '').toString().replace(/"/g,'&quot;')}">
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="ff-submit-bar" style="margin-top:16px;">
+      <button type="button" class="ff-export-btn" onclick="exportCourseReportToExcel('${candidateKey}')">&#128190; Export to Excel</button>
+      <button type="button" class="ff-submit-btn" onclick="saveCourseReport('${candidateKey}')">Save</button>
+    </div>
+  `;
+}
+
+function collectCourseReportInputs(candidateKey){
+  const body = document.getElementById('courseReportBody');
+  const durationInputs = body.querySelectorAll('.course-duration-input');
+  durationInputs.forEach(inp=>{
+    const catKey = inp.dataset.cat;
+    const idx = parseInt(inp.dataset.idx, 10);
+    if(DATA[candidateKey] && DATA[candidateKey][catKey] && DATA[candidateKey][catKey][idx]){
+      if(inp.classList.contains('course-assigned-date-input')){
+        DATA[candidateKey][catKey][idx].assignedDate = inp.value;
+      } else {
+        DATA[candidateKey][catKey][idx].duration = inp.value;
+      }
+    }
+  });
+}
+
+async function saveCourseReport(candidateKey){
+  collectCourseReportInputs(candidateKey);
+  markDirty();
+  await saveAll();
+  closeCourseReport();
+  showPrompt('Saved', null, null, {
+    isConfirm:true, confirmText:'OK',
+    message:'Course durations saved for ' + getName(candidateKey) + '.'
+  });
+}
+
+async function exportCourseReportToExcel(candidateKey){
+  // Save first so the exported file always reflects the latest entries
+  collectCourseReportInputs(candidateKey);
+  markDirty();
+  await saveAll();
+
+  const rows = [];
+  CATEGORIES.forEach(cat=>{
+    const items = (DATA[candidateKey] && DATA[candidateKey][cat.key]) || [];
+    items.forEach(it=>{
+      if(!it.checked){
+        rows.push({
+          'Candidate': getName(candidateKey),
+          'Category': cat.label,
+          'Course Name': it.item,
+          'Course Duration': it.duration || '',
+          'Assigned Date': it.assignedDate || ''
+        });
+      }
+    });
+  });
+
+  if(rows.length === 0){
+    showPrompt('Nothing to export', null, null, {
+      isConfirm:true, confirmText:'OK',
+      message:'No remaining courses to export for ' + getName(candidateKey) + '.'
+    });
+    return;
+  }
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:20},{wch:28},{wch:34},{wch:16},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Remaining Courses');
+  const safeName = getName(candidateKey).replace(/[^a-z0-9]+/gi,'_');
+  XLSX.writeFile(wb, `Remaining_Courses_${safeName}.xlsx`);
+
+  closeCourseReport();
+  showPrompt('Exported', null, null, {
+    isConfirm:true, confirmText:'OK',
+    message:'Saved and exported remaining courses for ' + getName(candidateKey) + '.'
+  });
+}
+
+function closeCourseReport(){
+  document.getElementById('courseReportOverlay').classList.remove('open');
+}
+document.getElementById('courseReportOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='courseReportOverlay') closeCourseReport();
+});
+
+// ===== Remaining Training Report (tabulated, all candidates & categories) =====
+let currentReportFilter = 'ALL';
+
+function buildReportRows(filterKey){
+  const rows = [];
+  Object.keys(DATA).forEach(k=>{
+    CATEGORIES.forEach(cat=>{
+      if(filterKey !== 'ALL' && cat.key !== filterKey) return;
+      const items = DATA[k][cat.key] || [];
+      const remaining = items.filter(i=>!i.checked);
+      if(remaining.length>0){
+        rows.push({
+          candidate: getName(k),
+          category: cat.label,
+          remaining: remaining,
+          done: items.length - remaining.length,
+          total: items.length
+        });
+      }
+    });
+  });
+  rows.sort((a,b)=> a.candidate.localeCompare(b.candidate) || a.category.localeCompare(b.category));
+  return rows;
+}
+
+function renderReportBody(){
+  const rows = buildReportRows(currentReportFilter);
+  const filterBar = `<div class="report-filter-bar" style="justify-content:space-between; align-items:center;">
+      <div class="report-filter-bar" style="margin:0;">
+        <button class="report-filter-btn ${currentReportFilter==='ALL'?'active':''}" onclick="setReportFilter('ALL')">All Categories</button>
+        ${CATEGORIES.map(c=>`<button class="report-filter-btn ${currentReportFilter===c.key?'active':''}" onclick="setReportFilter('${c.key}')">${c.label}</button>`).join('')}
+      </div>
+      <button type="button" class="ff-export-btn" style="padding:8px 16px; font-size:12.5px;" onclick="exportFullReportToExcel()">&#128190; Export to Excel</button>
+    </div>`;
+
+  const body = document.getElementById('reportBody');
+  if(rows.length===0){
+    body.innerHTML = filterBar + `<div class="report-empty">&#127881; No remaining training \u2014 everyone is fully complete${currentReportFilter==='ALL' ? ' in every category' : ' in this category'}.</div>`;
+    return;
+  }
+  const showCategoryColumn = currentReportFilter === 'ALL';
+  body.innerHTML = filterBar + `
+      <div class="report-table-wrap">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Candidate</th>
+              ${showCategoryColumn ? '<th>Category</th>' : ''}
+              <th>Remaining courses / records</th>
+              <th>Progress</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td class="report-cand">${r.candidate}</td>
+                ${showCategoryColumn ? `<td class="report-cat">${r.category}</td>` : ''}
+                <td class="report-items">${r.remaining.map(i=>'&bull; ' + i.item).join('<br>')}</td>
+                <td class="report-progress">${r.done}/${r.total}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+}
+
+async function exportFullReportToExcel(){
+  // Save first so the exported file always reflects the latest entries
+  markDirty();
+  await saveAll();
+
+  const rows = [];
+  Object.keys(DATA).forEach(k=>{
+    CATEGORIES.forEach(cat=>{
+      if(currentReportFilter !== 'ALL' && cat.key !== currentReportFilter) return;
+      const items = DATA[k][cat.key] || [];
+      items.forEach(it=>{
+        if(!it.checked){
+          rows.push({
+            'Candidate': getName(k),
+            'Category': cat.label,
+            'Course Name': it.item,
+            'Course Duration': it.duration || '',
+            'Assigned Date': it.assignedDate || ''
+          });
+        }
+      });
+    });
+  });
+
+  if(rows.length === 0){
+    showPrompt('Nothing to export', null, null, {
+      isConfirm:true, confirmText:'OK',
+      message:'No remaining training to export.'
+    });
+    return;
+  }
+
+  rows.sort((a,b)=> a.Candidate.localeCompare(b.Candidate) || a.Category.localeCompare(b.Category));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:20},{wch:28},{wch:34},{wch:16},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Remaining Training');
+  const suffix = currentReportFilter === 'ALL' ? 'All_Categories' : currentReportFilter.replace(/[^a-z0-9]+/gi,'_');
+  XLSX.writeFile(wb, `Remaining_Training_Report_${suffix}.xlsx`);
+}
+
+function setReportFilter(key){
+  currentReportFilter = key;
+  renderReportBody();
+}
+
+function openReport(){
+  currentReportFilter = activeCategory; // default to whichever category tab is open
+  renderReportBody();
+  document.getElementById('reportOverlay').classList.add('open');
+}
+function closeReport(){
+  document.getElementById('reportOverlay').classList.remove('open');
+}
+document.getElementById('reportOverlay').addEventListener('click', (e)=>{
+  if(e.target.id==='reportOverlay') closeReport();
+});
+
+
+renderRibbon();
+renderAddRow();
+renderGrid();
+</script>
+
+</body>
+</html>
